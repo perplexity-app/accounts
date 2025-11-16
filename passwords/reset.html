@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset Password</title>
+    <title>KNOX|Passwords</title>
     <style>
-        /* --- Modern CSS Styling --- */
+        /* --- Modern CSS Styling (Same as before) --- */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
 
         :root {
@@ -201,20 +201,26 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // --- T9 Mapping and Helper Functions ---
-        const t9Map = {
-            'a': '2', 'b': '2', 'c': '2',
-            'd': '3', 'e': '3', 'f': '3',
-            'g': '4', 'h': '4', 'i': '4',
-            'j': '5', 'k': '5', 'l': '5',
-            'm': '6', 'n': '6', 'o': '6',
-            'p': '7', 'q': '7', 'r': '7', 's': '7',
-            't': '8', 'u': '8', 'v': '8',
-            'w': '9', 'x': '9', 'y': '9', 'z': '9'
-        };
-        
-        function convertUsernameToT9(username) {
-            return username.toLowerCase().split('').map(char => t9Map[char] || '').join('');
+        // --- Helper Functions ---
+
+        /**
+         * Converts a username string to a numeric ID based on alphabetical position (a=1, b=2, etc.).
+         * Only processes letters a-z, ignoring other characters.
+         * @param {string} username The username part of the perplexityId.
+         * @returns {string} The resulting numeric ID.
+         */
+        function convertUsernameToNumericId(username) {
+            let numericId = '';
+            const lowercasedUsername = username.toLowerCase();
+            
+            for (const char of lowercasedUsername) {
+                // 'a'.charCodeAt(0) is 97. 'z' is 122.
+                const charCode = char.charCodeAt(0);
+                if (charCode >= 97 && charCode <= 122) {
+                    numericId += (charCode - 96).toString();
+                }
+            }
+            return numericId;
         }
         
         function showView(viewId) {
@@ -249,8 +255,8 @@
                     const userData = doc.data();
                     if (userData.perplexityId) {
                         const username = userData.perplexityId.split('@')[0];
-                        const t9Username = convertUsernameToT9(username);
-                        if (t9Username === numericIdFromUrl) {
+                        const convertedId = convertUsernameToNumericId(username); // <-- UPDATED FUNCTION CALL
+                        if (convertedId === numericIdFromUrl) {
                             foundUserDoc = doc;
                         }
                     }
@@ -303,7 +309,7 @@
             submitBtn.innerText = "Updating...";
             
             try {
-                // --- THIS IS INSECURE! In a real app, hash the password before saving. ---
+                // --- SECURITY WARNING! In a real app, hash the password before saving. ---
                 await userDoc.ref.update({
                     password: newPassword
                 });
