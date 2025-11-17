@@ -6,6 +6,7 @@
     <title>Sign Up to Perplexity</title>
     <link rel="icon" href="https://www.perplexity.ai/favicon.ico" type="image/x-icon">
     <style>
+        /* General Body and Container Styles - Dark Theme */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: #000;
@@ -25,6 +26,7 @@
             padding: 20px;
             box-sizing: border-box;
         }
+        /* Header Styles */
         .header {
             width: 100%;
             max-width: 400px;
@@ -38,18 +40,20 @@
         .header img {
             height: 24px;
             width: 24px;
-            filter: invert(1);
+            filter: invert(1); /* Makes the favicon white on dark background */
         }
         .header .back-arrow {
             color: #fff;
             font-size: 24px;
             text-decoration: none;
+            cursor: pointer;
         }
         h2 {
             font-size: 28px;
             margin-bottom: 30px;
             font-weight: bold;
         }
+        /* Input Group Styles (Floating Labels) */
         .input-group {
             margin-bottom: 25px;
             position: relative;
@@ -62,6 +66,7 @@
             font-size: 15px;
             pointer-events: none;
             transition: all 0.2s ease-out;
+            cursor: text; /* Indicate that clicking label will focus input */
         }
         input[type="text"],
         input[type="email"],
@@ -70,7 +75,7 @@
         input[type="tel"],
         select {
             width: 100%;
-            padding: 25px 15px 10px 15px;
+            padding: 25px 15px 10px 15px; /* Adjust padding for floating label */
             background-color: #000;
             border: 1px solid #2f3336;
             border-radius: 4px;
@@ -79,7 +84,38 @@
             box-sizing: border-box;
             outline: none;
             transition: border-color 0.2s ease-out;
+            -webkit-appearance: none; /* For iOS Safari date input styling */
+            appearance: none;
         }
+        /* Style for date input's placeholder color */
+        input[type="date"]::-webkit-datetime-edit-text,
+        input[type="date"]::-webkit-datetime-edit-month-field,
+        input[type="date"]::-webkit-datetime-edit-day-field,
+        input[type="date"]::-webkit-datetime-edit-year-field {
+            color: transparent; /* Hide default date text */
+        }
+        input[type="date"]:valid::-webkit-datetime-edit-text,
+        input[type="date"]:valid::-webkit-datetime-edit-month-field,
+        input[type="date"]:valid::-webkit-datetime-edit-day-field,
+        input[type="date"]:valid::-webkit-datetime-edit-year-field {
+            color: #fff; /* Show date text when a value is selected */
+        }
+        input[type="date"]:focus::-webkit-datetime-edit-text,
+        input[type="date"]:focus::-webkit-datetime-edit-month-field,
+        input[type="date"]:focus::-webkit-datetime-edit-day-field,
+        input[type="date"]:focus::-webkit-datetime-edit-year-field {
+            color: #fff;
+        }
+        select {
+            background: #000 url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2371767b%22%20d%3D%22M287%20197.97%20146.2%2057.17%205.4%20197.97c-7.8%207.8-20.5%207.8-28.3%200-7.8-7.8-7.8-20.5%200-28.3L132.1%2014.27c7.8-7.8%2020.5-7.8%2028.3%200l132.1%20155.4c7.8%207.8%207.8%2020.5%200%2028.3-7.8%207.8-20.5%207.8-28.3%200z%22%2F%3E%3C%2Fsvg%3E') no-repeat right 15px center;
+            background-size: 12px;
+            padding-right: 40px; /* Make space for the custom arrow */
+        }
+        select:focus {
+            background: #000 url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%231da1f2%22%20d%3D%22M287%20197.97%20146.2%2057.17%205.4%20197.97c-7.8%207.8-20.5%207.8-28.3%200-7.8-7.8-7.8-20.5%200-28.3L132.1%2014.27c7.8-7.8%2020.5-7.8%2028.3%200l132.1%20155.4c7.8%207.8%207.8%2020.5%200%2028.3-7.8%207.8-20.5%207.8-28.3%200z%22%2F%3E%3C%2Fsvg%3E') no-repeat right 15px center;
+            background-size: 12px;
+        }
+
         input[type="text"]:focus,
         input[type="email"]:focus,
         input[type="password"]:focus,
@@ -88,22 +124,25 @@
         select:focus {
             border-color: #1da1f2;
         }
+        /* Floating label animation */
         input[type="text"]:focus + label,
         input[type="email"]:focus + label,
         input[type="password"]:focus + label,
         input[type="date"]:focus + label,
         input[type="tel"]:focus + label,
         select:focus + label,
-        input[type="text"]:not(:placeholder-shown) + label,
-        input[type="email"]:not(:placeholder-shown) + label,
-        input[type="password"]:not(:placeholder-shown) + label,
-        input[type="date"]:not(:placeholder-shown) + label,
-        input[type="tel"]:not(:placeholder-shown) + label,
-        select:not([value=""]) + label {
+        input[type="text"]:not(:placeholder-shown):valid + label, /* :valid for initial fill with value */
+        input[type="email"]:not(:placeholder-shown):valid + label,
+        input[type="password"]:not(:placeholder-shown):valid + label,
+        input[type="date"]:not(:placeholder-shown):valid + label,
+        input[type="tel"]:not(:placeholder-shown):valid + label,
+        select:not([value=""]):valid + label { /* For select, if value is not empty */
             top: 5px;
             font-size: 12px;
             color: #1da1f2;
         }
+
+        /* Password Toggle */
         .password-toggle {
             position: absolute;
             right: 15px;
@@ -112,13 +151,16 @@
             cursor: pointer;
             color: #71767b;
             font-size: 20px;
+            z-index: 10; /* Ensure it's above the input */
         }
+        /* Error Messages */
         .error-message {
             color: #f4212e;
             font-size: 13px;
             margin-top: 5px;
             display: none;
         }
+        /* Character Count */
         .char-count {
             position: absolute;
             right: 15px;
@@ -126,6 +168,7 @@
             color: #71767b;
             font-size: 12px;
         }
+        /* Email Suggestion/Preview */
         .email-suggestion {
             font-size: 15px;
             color: #71767b;
@@ -136,9 +179,10 @@
             color: #1da1f2;
             cursor: pointer;
         }
+        /* Button Group */
         .button-group {
             display: flex;
-            justify-content: space-between;
+            justify-content: space-between; /* Not explicitly used in new single button layout, but good to keep */
             margin-top: 40px;
         }
         button {
@@ -158,17 +202,19 @@
         button.primary:hover {
             background-color: #e6e6e6;
         }
-        button.secondary {
+        button.secondary { /* Not currently used but from provided code */
             background-color: #000;
             color: #fff;
             border: 1px solid #536471;
         }
-        button.secondary:hover {
+        button.secondary:hover { /* Not currently used but from provided code */
             background-color: #1a1a1a;
         }
+        /* Utility for hiding steps */
         .hidden {
             display: none;
         }
+        /* Terms Text */
         .terms-text {
             font-size: 13px;
             color: #71767b;
@@ -179,6 +225,7 @@
             color: #1da1f2;
             text-decoration: none;
         }
+        /* Custom Domain Section */
         .custom-domain-section {
             margin-top: 25px;
             padding: 15px;
@@ -203,6 +250,10 @@
             text-align: center;
             font-size: 20px;
             padding: 0;
+            background-color: #000;
+            border: 1px solid #2f3336;
+            color: #fff;
+            border-radius: 4px;
         }
         .copy-button {
             background-color: #1da1f2;
@@ -213,27 +264,42 @@
             margin-top: 10px;
             display: block;
             text-align: center;
+            border: none;
+            cursor: pointer;
+        }
+        /* Custom select arrow styling */
+        select option {
+            background-color: #000;
+            color: #fff;
+        }
+        select:invalid {
+            color: #71767b; /* Color for "Select Gender" */
+        }
+        select option:checked {
+            background-color: #1da1f2; /* Highlight selected option */
+            color: #fff;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <a href="#" class="back-arrow" onclick="history.back(); return false;">&larr;</a>
+        <a href="#" class="back-arrow" onclick="goBack(); return false;">&larr;</a>
         <img src="https://www.perplexity.ai/favicon.ico" alt="Perplexity Logo">
-        <span></span>
+        <span></span> <!-- Placeholder for potential right-aligned element -->
     </div>
 
     <div class="container">
+        <!-- Step 1: First Name, Last Name -->
         <div id="step1">
             <h2>Create your account</h2>
             <div class="input-group">
-                <input type="text" id="firstName" placeholder=" " maxlength="50">
+                <input type="text" id="firstName" placeholder=" " maxlength="50" oninput="updateCharCount(this)">
                 <label for="firstName">First Name</label>
                 <span class="char-count">0/50</span>
                 <div class="error-message" id="firstNameError">First Name cannot be empty.</div>
             </div>
             <div class="input-group">
-                <input type="text" id="lastName" placeholder=" " maxlength="50">
+                <input type="text" id="lastName" placeholder=" " maxlength="50" oninput="updateCharCount(this)">
                 <label for="lastName">Last Name</label>
                 <span class="char-count">0/50</span>
                 <div class="error-message" id="lastNameError">Last Name cannot be empty.</div>
@@ -241,12 +307,13 @@
             <button class="primary" onclick="nextStep(2)">Next</button>
         </div>
 
+        <!-- Step 2: Mobile Number, Date of Birth, Gender -->
         <div id="step2" class="hidden">
             <h2>Basic Information</h2>
             <div class="input-group">
-                <input type="tel" id="mobileNumber" placeholder=" ">
+                <input type="tel" id="mobileNumber" placeholder=" " pattern="[0-9]{10}">
                 <label for="mobileNumber">Mobile Number</label>
-                <div class="error-message" id="mobileNumberError">Please enter a valid mobile number.</div>
+                <div class="error-message" id="mobileNumberError">Please enter a valid 10-digit mobile number.</div>
             </div>
             <div class="input-group">
                 <input type="date" id="dateOfBirth" placeholder=" ">
@@ -266,6 +333,7 @@
             <button class="primary" onclick="nextStep(3)">Next</button>
         </div>
 
+        <!-- Step 3: Choose Email / Custom Domain -->
         <div id="step3" class="hidden">
             <h2>Choose your email</h2>
             <div class="input-group">
@@ -290,12 +358,12 @@
                 <div id="codeRequired" class="hidden">
                     <p>This domain is already taken. Please enter your 6-character verification code.</p>
                     <div class="code-input-group" id="codeInputGroup">
-                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 1)">
-                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 2)">
-                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 3)">
-                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 4)">
-                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 5)">
-                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 6)">
+                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 0)" onkeyup="handleCodeInput(event, this, 0)">
+                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 1)" onkeyup="handleCodeInput(event, this, 1)">
+                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 2)" onkeyup="handleCodeInput(event, this, 2)">
+                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 3)" onkeyup="handleCodeInput(event, this, 3)">
+                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 4)" onkeyup="handleCodeInput(event, this, 4)">
+                        <input type="text" class="code-char" maxlength="1" oninput="moveToNextCode(this, 5)" onkeyup="handleCodeInput(event, this, 5)">
                     </div>
                     <div class="error-message" id="codeError">Invalid code.</div>
                 </div>
@@ -305,6 +373,7 @@
             <button class="primary" onclick="nextStep(4)">Next</button>
         </div>
 
+        <!-- Step 4: Set Password and Terms -->
         <div id="step4" class="hidden">
             <h2>Set your password</h2>
             <div class="input-group">
@@ -350,41 +419,30 @@
                 errorElement.textContent = message;
                 errorElement.style.display = 'block';
             } else {
+                errorElement.textContent = '';
                 errorElement.style.display = 'none';
             }
         }
 
-        // Helper function to validate email format
-        function isValidEmail(email) {
-            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        }
-
-        // Helper function to generate a random 6-character alphanumeric code with special characters
-        function generateCode(length = 6) {
-            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+~`|}{[]\:;<,>.?/';
-            let result = '';
-            for (let i = 0; i < length; i++) {
-                result += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return result;
-        }
-
         // Update char count for inputs with maxlength
+        function updateCharCount(inputElement) {
+            const charCountElement = inputElement.nextElementSibling; // Assumes char-count is sibling of input
+            if (charCountElement && charCountElement.classList.contains('char-count')) {
+                charCountElement.textContent = `${inputElement.value.length}/${inputElement.maxLength}`;
+            }
+        }
+
+        // Apply char count to existing inputs on load
         document.querySelectorAll('input[maxlength]').forEach(input => {
-            input.addEventListener('input', (event) => {
-                const charCountElement = event.target.nextElementSibling; // Assumes char-count is sibling
-                if (charCountElement && charCountElement.classList.contains('char-count')) {
-                    charCountElement.textContent = `${event.target.value.length}/${event.target.maxLength}`;
-                }
-            });
+            updateCharCount(input);
         });
 
         function updateEmailPreview() {
-            const emailPrefix = document.getElementById('emailPrefix').value;
-            const emailDomain = document.getElementById('emailDomain').value;
+            const emailPrefix = document.getElementById('emailPrefix').value.trim();
+            const emailDomain = document.getElementById('emailDomain').value.trim();
             const emailFullElement = document.getElementById('emailFull');
             if (emailPrefix) {
-                emailFullElement.textContent = `@${emailPrefix}${emailDomain}`;
+                emailFullElement.innerHTML = `Your Perplexity ID will be: <strong>${emailPrefix}${emailDomain}</strong>`;
             } else {
                 emailFullElement.textContent = '';
             }
@@ -401,232 +459,3 @@
                 if (!firstName) {
                     showError('firstNameError', 'First Name cannot be empty.');
                     isValid = false;
-                } else {
-                    showError('firstNameError', '', false);
-                }
-                if (!lastName) {
-                    showError('lastNameError', 'Last Name cannot be empty.');
-                    isValid = false;
-                } else {
-                    showError('lastNameError', '', false);
-                }
-            } else if (currentStep === 2) {
-                const mobileNumber = document.getElementById('mobileNumber').value.trim();
-                const dateOfBirth = document.getElementById('dateOfBirth').value;
-                const gender = document.getElementById('gender').value;
-
-                if (!mobileNumber || !/^\d{10}$/.test(mobileNumber)) {
-                    showError('mobileNumberError', 'Please enter a valid 10-digit mobile number.');
-                    isValid = false;
-                } else {
-                    showError('mobileNumberError', '', false);
-                }
-                if (!dateOfBirth) {
-                    showError('dobError', 'Please enter your date of birth.');
-                    isValid = false;
-                } else {
-                    showError('dobError', '', false);
-                }
-                if (!gender) {
-                    showError('genderError', 'Please select your gender.');
-                    isValid = false;
-                } else {
-                    showError('genderError', '', false);
-                }
-            } else if (currentStep === 3) {
-                const emailPrefix = document.getElementById('emailPrefix').value.trim();
-                const emailDomain = document.getElementById('emailDomain').value.trim();
-                if (!emailPrefix) {
-                    showError('emailPrefixError', 'Email prefix cannot be empty.');
-                    isValid = false;
-                } else {
-                    showError('emailPrefixError', '', false);
-                }
-
-                // Custom domain logic
-                const customDomainInput = document.getElementById('customDomainInput');
-                if (!document.getElementById('customDomainSection').classList.contains('hidden')) {
-                    const domain = customDomainInput.value.trim();
-                    if (!domain || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
-                        showError('customDomainError', 'Domain must be valid (e.g., example.com)');
-                        isValid = false;
-                    } else {
-                        showError('customDomainError', '', false);
-                        // Check if domain is taken
-                        const domainSnapshot = await db.collection('domains').doc(domain).get();
-                        if (domainSnapshot.exists) {
-                            // Domain taken, check code
-                            if (document.getElementById('codeRequired').classList.contains('hidden')) {
-                                document.getElementById('codeRequired').classList.remove('hidden');
-                                isValid = false; // User needs to enter the code
-                            } else {
-                                // Check if the entered code is correct
-                                const enteredCode = Array.from(document.querySelectorAll('.code-char')).map(input => input.value).join('');
-                                const storedCode = domainSnapshot.data().code;
-                                if (enteredCode !== storedCode) {
-                                    showError('codeError', 'Invalid code.');
-                                    isValid = false;
-                                } else {
-                                    showError('codeError', '', false);
-                                }
-                            }
-                        } else {
-                            document.getElementById('codeRequired').classList.add('hidden');
-                        }
-                    }
-                }
-            }
-
-            if (!isValid) {
-                return;
-            }
-
-            document.getElementById(steps[currentStep - 1]).classList.add('hidden');
-            document.getElementById(steps[stepNumber - 1]).classList.remove('hidden');
-            currentStep = stepNumber;
-
-            // Specific logic for step 3 to handle custom domain and code generation
-            if (currentStep === 3) {
-                const urlParams = new URLSearchParams(window.location.search);
-                const tParam = urlParams.get('t');
-
-                const customDomainSection = document.getElementById('customDomainSection');
-                const emailDomainInput = document.getElementById('emailDomain');
-
-                if (tParam && tParam !== '') {
-                    customDomainSection.classList.remove('hidden');
-                    emailDomainInput.value = '@' + tParam; // Pre-fill with t parameter
-                    emailDomainInput.setAttribute('readonly', true);
-                    document.getElementById('customDomainInput').value = tParam; // Also pre-fill custom domain
-                    checkCustomDomain(); // Validate the pre-filled custom domain
-                } else {
-                    customDomainSection.classList.add('hidden');
-                    emailDomainInput.value = '@perplexity.com'; // Default domain
-                    emailDomainInput.setAttribute('readonly', true);
-                }
-                updateEmailPreview();
-            }
-        }
-
-        async function checkCustomDomain() {
-            const customDomainInput = document.getElementById('customDomainInput');
-            const domain = customDomainInput.value.trim();
-            const emailDomainInput = document.getElementById('emailDomain');
-            const codeRequired = document.getElementById('codeRequired');
-            const generatedCodeDisplay = document.getElementById('generatedCodeDisplay');
-
-            if (!domain || !/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(domain)) {
-                showError('customDomainError', 'Domain must be valid (e.g., example.com)');
-                emailDomainInput.value = '@perplexity.com'; // Reset to default
-                codeRequired.classList.add('hidden');
-                generatedCodeDisplay.classList.add('hidden');
-                return;
-            }
-
-            showError('customDomainError', '', false);
-            emailDomainInput.value = '@' + domain;
-            updateEmailPreview();
-
-            // Check if domain is taken in Firestore
-            const domainSnapshot = await db.collection('domains').doc(domain).get();
-            if (domainSnapshot.exists) {
-                codeRequired.classList.remove('hidden');
-                generatedCodeDisplay.classList.add('hidden'); // Hide generated code if domain is taken
-            } else {
-                codeRequired.classList.add('hidden');
-                userGeneratedCode = generateCode(); // Generate a new code for this user
-                document.getElementById('userGeneratedCode').textContent = userGeneratedCode;
-                generatedCodeDisplay.classList.remove('hidden'); // Show the generated code
-            }
-        }
-
-        function moveToNextCode(input, index) {
-            const inputs = document.querySelectorAll('.code-char');
-            if (input.value.length === input.maxLength) {
-                if (index < inputs.length) {
-                    inputs[index].focus();
-                }
-            }
-        }
-
-        function togglePasswordVisibility(id) {
-            const passwordInput = document.getElementById(id);
-            const toggleIcon = passwordInput.nextElementSibling;
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.innerHTML = '&#128064;'; // Open eye icon
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.innerHTML = '&#128065;'; // Closed eye icon
-            }
-        }
-
-        async function signUp() {
-            const password = document.getElementById('password').value;
-            if (password.length < 8) {
-                showError('passwordError', 'Password must be at least 8 characters.');
-                return;
-            } else {
-                showError('passwordError', '', false);
-            }
-
-            const firstName = document.getElementById('firstName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-            const mobileNumber = document.getElementById('mobileNumber').value.trim();
-            const dateOfBirth = document.getElementById('dateOfBirth').value;
-            const gender = document.getElementById('gender').value;
-            const emailPrefix = document.getElementById('emailPrefix').value.trim();
-            const emailDomain = document.getElementById('emailDomain').value.trim().substring(1); // Remove the '@'
-            const email = `${emailPrefix}@${emailDomain}`;
-
-            // Check if custom domain was used and if a code was generated
-            const customDomainInput = document.getElementById('customDomainInput');
-            const customDomainUsed = !document.getElementById('customDomainSection').classList.contains('hidden') && customDomainInput.value.trim() === emailDomain;
-
-            try {
-                // Check if email already exists
-                const emailSnapshot = await db.collection('users').where('email', '==', email).get();
-                if (!emailSnapshot.empty) {
-                    alert('This email is already registered. Please use a different email or login.');
-                    return;
-                }
-
-                // Add domain to Firestore if it's a new custom domain
-                if (customDomainUsed && userGeneratedCode) {
-                    const domainDocRef = db.collection('domains').doc(emailDomain);
-                    const domainDoc = await domainDocRef.get();
-                    if (!domainDoc.exists) {
-                        await domainDocRef.set({
-                            code: userGeneratedCode,
-                            ownerEmail: email,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
-                }
-
-                await db.collection('users').add({
-                    firstName: firstName,
-                    lastName: lastName,
-                    mobileNumber: mobileNumber,
-                    dateOfBirth: dateOfBirth,
-                    gender: gender,
-                    email: email,
-                    password: password, // In a real application, hash this password
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                alert('Account created successfully! Redirecting to login...');
-                window.location.href = '1.html'; // Redirect to login page
-            } catch (error) {
-                console.error("Error signing up: ", error);
-                alert("Error creating account: " + error.message);
-            }
-        }
-
-        // Initialize with the first step
-        document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById(steps[0]).classList.remove('hidden');
-        });
-    </script>
-</body>
-</html>
