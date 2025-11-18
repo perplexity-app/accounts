@@ -1,0 +1,578 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account</title>
+    <style>
+        /* CSS is merged into the HTML file as requested */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        :root {
+            --background-color: #ffffff;
+            --text-color: #000000;
+            --button-bg-color: #000000;
+            --button-text-color: #ffffff;
+            --input-border-color: #888;
+            --input-focus-border-color: #000000;
+            --text-secondary-color: #555;
+            --error-color: #d93025;
+            --success-color: #1e8e3e;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            height: 50px;
+            margin-bottom: 20px;
+        }
+
+        #back-arrow {
+            font-size: 28px;
+            font-weight: bold;
+            text-decoration: none;
+            color: var(--text-color);
+            visibility: hidden; /* Hidden on first step */
+            cursor: pointer;
+        }
+
+        main {
+            flex-grow: 1;
+        }
+
+        .form-step h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            color: var(--text-secondary-color);
+            margin-bottom: 30px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 18px 12px 6px 12px;
+            border: 1px solid var(--input-border-color);
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: transparent;
+            color: var(--text-color);
+            -webkit-appearance: none;
+        }
+        
+        .username-wrapper {
+            display: flex;
+            align-items: center;
+            border: 1px solid var(--input-border-color);
+            border-radius: 4px;
+            padding-right: 12px;
+        }
+        .username-wrapper input {
+            border: none;
+            flex-grow: 1;
+        }
+        .username-wrapper input:focus {
+            outline: none;
+        }
+        .username-wrapper:focus-within {
+             border-color: var(--input-focus-border-color);
+             border-width: 2px;
+        }
+
+        .email-suffix {
+            color: var(--text-secondary-color);
+            font-size: 16px;
+        }
+
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: var(--input-focus-border-color);
+            border-width: 2px;
+            padding: 17px 11px 5px 11px;
+        }
+
+        .input-group label {
+            position: absolute;
+            left: 12px;
+            top: 15px;
+            color: var(--text-secondary-color);
+            pointer-events: none;
+            transition: all 0.2s ease;
+            font-size: 16px;
+            background-color: var(--background-color);
+            padding: 0 4px;
+        }
+        
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+            top: -8px;
+            font-size: 12px;
+            color: var(--input-focus-border-color);
+        }
+
+        /* Special handling for date and select */
+        .input-group input[type="date"] + label,
+        .input-group select + label {
+            top: -8px;
+            font-size: 12px;
+        }
+        .input-group select:focus + label {
+            color: var(--input-focus-border-color);
+        }
+
+        .password-group {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-secondary-color);
+            font-size: 20px;
+        }
+
+        .feedback-message {
+            font-size: 14px;
+            margin-top: -20px;
+            margin-bottom: 15px;
+            padding-left: 5px;
+        }
+        .error-message { color: var(--error-color); }
+        .success-message { color: var(--success-color); }
+
+        .summary-field {
+            margin-bottom: 20px;
+            font-size: 16px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .summary-field span {
+            display: block;
+            font-size: 12px;
+            color: var(--text-secondary-color);
+            margin-bottom: 2px;
+        }
+
+        footer {
+            margin-top: auto;
+            padding-bottom: 20px;
+        }
+
+        #next-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--button-bg-color);
+            color: var(--button-text-color);
+            border: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        #next-btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <a id="back-arrow">&#8592;</a>
+        </header>
+
+        <main id="signup-form">
+            <!-- Step 1: Name -->
+            <div id="step-1" class="form-step">
+                <h1>Create your account</h1>
+                <div class="input-group">
+                    <input type="text" id="firstName" placeholder=" " required>
+                    <label for="firstName">First Name</label>
+                </div>
+                <div class="input-group">
+                    <input type="text" id="lastName" placeholder=" " required>
+                    <label for="lastName">Last Name</label>
+                </div>
+            </div>
+
+            <!-- Step 2: DOB & Gender -->
+            <div id="step-2" class="form-step" style="display:none;">
+                 <h1>Tell us about yourself</h1>
+                 <p class="description">This information will not be displayed on your public profile.</p>
+                 <div class="input-group">
+                    <input type="date" id="dob" required>
+                    <label for="dob">Date of birth</label>
+                </div>
+                <div class="input-group">
+                    <select id="gender" required>
+                        <option value="" disabled selected></option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Prefer not to say</option>
+                    </select>
+                    <label for="gender">Gender</label>
+                 </div>
+            </div>
+
+            <!-- Step 3: Mobile Number -->
+            <div id="step-3" class="form-step" style="display:none;">
+                 <h1>Add your mobile number</h1>
+                 <p class="description">This will be used for account verification and security. It won't be public.</p>
+                 <div class="input-group">
+                    <input type="tel" id="mobile" placeholder=" " required>
+                    <label for="mobile">Mobile Number</label>
+                </div>
+                <div id="mobile-error" class="feedback-message error-message"></div>
+            </div>
+
+             <!-- Step 4: Choose Username -->
+            <div id="step-4" class="form-step" style="display:none;">
+                <h1>What should we call you?</h1>
+                <p class="description">Your username is unique and will be used to create your login email.</p>
+                <div class="input-group">
+                    <div class="username-wrapper">
+                        <input type="text" id="username" placeholder=" " required autocapitalize="none">
+                        <span class="email-suffix">@perplexity.com</span>
+                    </div>
+                    <label for="username">Username</label>
+                </div>
+                <div id="username-feedback" class="feedback-message"></div>
+            </div>
+
+            <!-- Step 5: Confirm Details & Email -->
+            <div id="step-5" class="form-step" style="display:none;">
+                <h1>Review your info</h1>
+                <p class="description">Please confirm your details. You'll use the email below to log in.</p>
+                <div class="summary-field"><span>Name</span><b id="summary-name"></b></div>
+                <div class="summary-field"><span>Mobile Number</span><b id="summary-mobile"></b></div>
+                <div class="summary-field"><span>Your login Email</span><b id="summary-email"></b></div>
+            </div>
+
+            <!-- Step 6: Password -->
+            <div id="step-6" class="form-step" style="display:none;">
+                <h1>You'll need a password</h1>
+                <p class="description">Make sure it's 8 characters or more.</p>
+                <div class="input-group password-group">
+                    <input type="password" id="password" placeholder=" " required>
+                    <label for="password">Password</label>
+                    <span class="toggle-password" id="toggle-password-visibility">👁️</span>
+                </div>
+                <div id="password-error" class="feedback-message error-message"></div>
+            </div>
+            
+            <!-- Final Step: Success -->
+            <div id="step-success" class="form-step" style="display:none;">
+                <h1>Account Created!</h1>
+                <p class="description">Welcome aboard! You can now log in with your email: <br><b id="final-email"></b>.</p>
+            </div>
+        </main>
+
+        <footer>
+            <button id="next-btn">Next</button>
+        </footer>
+    </div>
+
+    <!-- JavaScript is merged into the HTML file as requested -->
+    <script type="module">
+        // Import Firebase functions from the CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, setDoc, doc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+            authDomain: "xperts-metadata.firebaseapp.com",
+            projectId: "xperts-metadata",
+            storageBucket: "xperts-metadata.appspot.com",
+            messagingSenderId: "514845910910",
+            appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+            measurementId: "G-CQ5KWGJSZB"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Global state
+        let currentStep = 1;
+        const userData = {};
+        const totalSteps = 6;
+
+        // DOM Elements
+        const backArrow = document.getElementById('back-arrow');
+        const nextBtn = document.getElementById('next-btn');
+        const mobileError = document.getElementById('mobile-error');
+        const usernameFeedback = document.getElementById('username-feedback');
+        const passwordError = document.getElementById('password-error');
+        const togglePasswordBtn = document.getElementById('toggle-password-visibility');
+        const usernameInput = document.getElementById('username');
+
+        // Event Listeners
+        nextBtn.addEventListener('click', handleNextStep);
+        backArrow.addEventListener('click', prevStep);
+        togglePasswordBtn.addEventListener('click', togglePasswordVisibility);
+        usernameInput.addEventListener('input', () => {
+            // Clear feedback when user starts typing again
+            usernameFeedback.textContent = '';
+            usernameFeedback.className = 'feedback-message';
+        });
+
+        function updateUI() {
+            const steps = document.querySelectorAll('.form-step');
+            steps.forEach((step, index) => {
+                step.style.display = (index + 1 === currentStep) ? 'block' : 'none';
+            });
+
+            backArrow.style.visibility = (currentStep > 1 && currentStep <= totalSteps) ? 'visible' : 'hidden';
+            
+            if (currentStep > totalSteps) { // Success step
+                nextBtn.style.display = 'none';
+                backArrow.style.visibility = 'hidden';
+            } else {
+                nextBtn.style.display = 'block';
+            }
+
+            if (currentStep === 5) {
+                nextBtn.textContent = 'Confirm & Continue';
+            } else if (currentStep === 6) {
+                nextBtn.textContent = 'Create Account';
+            } else {
+                nextBtn.textContent = 'Next';
+            }
+        }
+
+        async function handleNextStep() {
+            if (!validateCurrentStep()) return;
+            
+            nextBtn.disabled = true;
+            nextBtn.textContent = 'Checking...';
+            let proceed = true;
+
+            // Handle async validation for mobile and username
+            if (currentStep === 3) {
+                const mobile = document.getElementById('mobile').value.trim();
+                const isUnique = await isMobileUnique(mobile);
+                if (!isUnique) {
+                    proceed = false;
+                } else {
+                    userData.mobile = mobile;
+                }
+            } else if (currentStep === 4) {
+                 const username = usernameInput.value.trim().toLowerCase();
+                 const isUnique = await isUsernameUnique(username);
+                 if (!isUnique) {
+                     proceed = false;
+                 } else {
+                     userData.username = username;
+                     userData.email = `${username}@perplexity.com`;
+                 }
+            }
+            
+            nextBtn.disabled = false;
+            updateUI(); // Resets button text
+
+            if (!proceed) return;
+
+            if (currentStep === totalSteps) {
+                await createAccount();
+                return;
+            }
+
+            currentStep++;
+            prepareStep(currentStep);
+            updateUI();
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        }
+
+        function validateCurrentStep() {
+            let isValid = true;
+            switch(currentStep) {
+                case 1:
+                    const firstName = document.getElementById('firstName').value.trim();
+                    const lastName = document.getElementById('lastName').value.trim();
+                    if (firstName === '' || lastName === '') {
+                        alert('Please enter both your first and last name.');
+                        isValid = false;
+                    } else {
+                        userData.firstName = firstName;
+                        userData.lastName = lastName;
+                    }
+                    break;
+                case 2:
+                    const dob = document.getElementById('dob').value;
+                    const gender = document.getElementById('gender').value;
+                     if (dob === '' || gender === '') {
+                        alert('Please provide your date of birth and gender.');
+                        isValid = false;
+                    } else {
+                        userData.dob = dob;
+                        userData.gender = gender;
+                    }
+                    break;
+                case 3:
+                     const mobile = document.getElementById('mobile').value.trim();
+                     if (!/^\d{10,15}$/.test(mobile)) { 
+                        mobileError.textContent = "Please enter a valid mobile number.";
+                        isValid = false;
+                     } else { mobileError.textContent = ""; }
+                     break;
+                case 4:
+                    const username = usernameInput.value.trim();
+                    if (!/^[a-zA-Z0-9_.]+$/.test(username) || username.length < 3) {
+                        usernameFeedback.textContent = 'Username must be at least 3 characters long and can only contain letters, numbers, periods, and underscores.';
+                        usernameFeedback.className = 'feedback-message error-message';
+                        isValid = false;
+                    } else { usernameFeedback.textContent = ''; }
+                    break;
+                case 6:
+                    const password = document.getElementById('password').value;
+                    if (password.length < 8) {
+                        passwordError.textContent = 'Password must be at least 8 characters long.';
+                        isValid = false;
+                    } else {
+                        passwordError.textContent = '';
+                        userData.password = password;
+                    }
+                    break;
+            }
+            return isValid;
+        }
+
+        function prepareStep(step) {
+            if (step === 5) { // Prepare summary step
+                document.getElementById('summary-name').textContent = `${userData.firstName} ${userData.lastName}`;
+                document.getElementById('summary-mobile').textContent = userData.mobile;
+                document.getElementById('summary-email').textContent = userData.email;
+            }
+        }
+
+        async function isMobileUnique(mobile) {
+            try {
+                const q = query(collection(db, "users"), where("mobile", "==", mobile));
+                const querySnapshot = await getDocs(q);
+                if (!querySnapshot.empty) {
+                    mobileError.textContent = "This mobile number is already taken.";
+                    return false;
+                }
+                mobileError.textContent = "";
+                return true;
+            } catch (error) {
+                console.error("Error checking mobile: ", error);
+                mobileError.textContent = "Could not verify mobile. Please try again.";
+                return false;
+            }
+        }
+
+        async function isUsernameUnique(username) {
+            const email = `${username}@perplexity.com`;
+            try {
+                const q = query(collection(db, "users"), where("email", "==", email));
+                const querySnapshot = await getDocs(q);
+                 if (!querySnapshot.empty) {
+                    usernameFeedback.textContent = "This username is already taken. Try another.";
+                    usernameFeedback.className = 'feedback-message error-message';
+                    return false;
+                }
+                usernameFeedback.textContent = "Username is available!";
+                usernameFeedback.className = 'feedback-message success-message';
+                return true;
+            } catch (error) {
+                 console.error("Error checking username: ", error);
+                usernameFeedback.textContent = "Could not verify username. Please try again.";
+                usernameFeedback.className = 'feedback-message error-message';
+                return false;
+            }
+        }
+
+        async function createAccount() {
+            nextBtn.disabled = true;
+            nextBtn.textContent = 'Creating Account...';
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, userData.email, userData.password);
+                const user = userCredential.user;
+
+                await setDoc(doc(db, "users", user.uid), {
+                    firstName: userData.firstName,
+                    lastName: userData.lastName,
+                    dob: userData.dob,
+                    gender: userData.gender,
+                    mobile: userData.mobile,
+                    email: userData.email,
+                    username: userData.username,
+                    createdAt: new Date()
+                });
+
+                document.getElementById('final-email').textContent = userData.email;
+                currentStep++;
+                updateUI();
+
+            } catch (error) {
+                console.error("Signup Error:", error.code, error.message);
+                passwordError.textContent = "Failed to create account. " + error.message;
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Create Account';
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.textContent = type === 'password' ? '👁️' : '🙈';
+        }
+
+        // Initial UI setup
+        updateUI();
+    </script>
+</body>
+</html>
