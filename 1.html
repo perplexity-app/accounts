@@ -1,0 +1,97 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log in to X</title>
+    <style>
+        /* Styles remain the same */
+        html { height: 100%; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #000000; color: #e7e9ea; display: flex; justify-content: center; height: 100%; margin: 0; }
+        .container { display: flex; flex-direction: column; justify-content: space-between; width: 100%; max-width: 400px; padding: 1rem; box-sizing: border-box; }
+        .top-content { padding-top: 1rem; }
+        .logo { font-size: 2.5rem; font-weight: bold; text-align: center; margin-bottom: 2rem; }
+        h1 { font-size: 1.75rem; font-weight: 800; margin-bottom: 1.5rem; line-height: 1.2; }
+        p { color: #71767b; line-height: 1.4; }
+        .form-group { position: relative; margin-top: 2rem; }
+        .form-input { width: 100%; padding: 1rem 0.75rem; border: 1px solid #333639; border-radius: 4px; font-size: 1.1rem; color: #e7e9ea; background-color: transparent; box-sizing: border-box; transition: border-color 0.2s; }
+        .form-input:focus { outline: none; border-color: #1d9bf0; box-shadow: 0 0 0 1px #1d9bf0; }
+        .form-label { position: absolute; top: 1rem; left: 0.75rem; color: #71767b; pointer-events: none; transition: all 0.2s ease-out; }
+        .form-input:focus + .form-label, .form-input:not(:placeholder-shown) + .form-label { top: 0.25rem; left: 0.5rem; font-size: 0.75rem; color: #1d9bf0; background-color: #000000; padding: 0 0.25rem; }
+        .error-message { color: #d93025; font-size: 0.9rem; margin-top: 0.5rem; min-height: 1rem; }
+        .form-input.error { border-color: #d93025; }
+        .bottom-controls { padding-bottom: 1rem; }
+        .btn { width: 100%; padding: 0.8rem; border: none; border-radius: 9999px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+        .btn-primary { background-color: #eff3f4; color: #0f1419; margin-bottom: 1rem; }
+        .btn-primary:hover:not(:disabled) { background-color: #d7dbdc; }
+        .btn-primary:disabled { background-color: #8b98a5; cursor: not-allowed; color: #000; opacity: 0.7; }
+        .btn-secondary { background-color: transparent; color: #eff3f4; border: 1px solid #536471; }
+        .btn-secondary:hover { background-color: rgba(239, 243, 244, 0.1); }
+        .hidden { display: none; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="top-content">
+            <div class="logo">X</div>
+            <div id="initial-step">
+                <h1>To get started, first enter your phone, email, or @username</h1>
+                <form id="login-form"><div class="form-group"><input type="text" id="identifier" class="form-input" placeholder=" " required><label for="identifier" class="form-label">Phone, email, or username</label></div><p id="identifier-error" class="error-message"></p></form>
+            </div>
+            <div id="otp-step" class="hidden">
+                <h1>We sent you a code</h1><p>Enter it below to verify <strong id="user-identifier-display"></strong>.</p>
+                <form id="otp-form"><div class="form-group"><input type="text" id="otp" class="form-input" placeholder=" " required maxlength="6" inputmode="numeric"><label for="otp" class="form-label">Verification code</label></div><p id="otp-error" class="error-message"></p></form>
+            </div>
+        </div>
+        <div class="bottom-controls"><button type="submit" id="next-btn" class="btn btn-primary" form="login-form">Next</button><button id="forgot-password-btn" class="btn btn-secondary">Forgot password?</button></div>
+    </div>
+    <script>
+        const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
+        const emailjsConfig = { serviceID: 'service_ijwq7ob', templateID: 'template_l9yg71m', publicKey: 'Yr9MutUoHOEONnFgn' };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        emailjs.init(emailjsConfig.publicKey);
+        const loginForm = document.getElementById('login-form'), otpForm = document.getElementById('otp-form'), identifierInput = document.getElementById('identifier'), otpInput = document.getElementById('otp'), nextBtn = document.getElementById('next-btn'), initialStepDiv = document.getElementById('initial-step'), otpStepDiv = document.getElementById('otp-step'), userIdentifierDisplay = document.getElementById('user-identifier-display'), identifierError = document.getElementById('identifier-error'), otpError = document.getElementById('otp-error');
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const identifier = identifierInput.value.trim().toLowerCase();
+            identifierError.textContent = '', identifierInput.classList.remove('error'), nextBtn.disabled = true, nextBtn.textContent = 'Checking...';
+            if (!identifier) return identifierError.textContent = 'Please enter your details.', identifierInput.classList.add('error'), nextBtn.disabled = false, nextBtn.textContent = 'Next', void 0;
+            try {
+                const [igniteIdResult, emailResult, phoneResult] = await Promise.all([db.collection('users').where('igniteId', '==', identifier).limit(1).get(), db.collection('users').where('recoveryEmail', '==', identifier).limit(1).get(), db.collection('users').where('phoneNumber', '==', identifier).limit(1).get()]);
+                let userDoc = null;
+                if (!igniteIdResult.empty) userDoc = igniteIdResult.docs[0]; else if (!emailResult.empty) userDoc = emailResult.docs[0]; else if (!phoneResult.empty) userDoc = phoneResult.docs[0];
+                if (!userDoc) window.location.href = '222.html';
+                else {
+                    const userData = userDoc.data(), userEmail = userData.recoveryEmail;
+                    // --- DEBUGGING LINES ---
+                    console.log("Found user document. Here is the data received from Firestore:");
+                    console.log(userData);
+                    console.log("Value being sent to EmailJS as 'to_email':", userEmail);
+                    // -----------------------
+                    const generatedOtp = Math.floor(1e5 + 9e5 * Math.random()).toString();
+                    sessionStorage.setItem('otp', generatedOtp), sessionStorage.setItem('userEmail', userEmail);
+                    const templateParams = { to_email: userEmail, otp: generatedOtp };
+                    await emailjs.send(emailjsConfig.serviceID, emailjsConfig.templateID, templateParams), userIdentifierDisplay.textContent = userEmail, initialStepDiv.classList.add('hidden'), otpStepDiv.classList.remove('hidden'), nextBtn.textContent = 'Verify', nextBtn.setAttribute('form', 'otp-form'), document.getElementById('forgot-password-btn').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error("Error during login process:", error), identifierError.textContent = 'An error occurred. Please try again.', identifierInput.classList.add('error');
+            } finally {
+                nextBtn.disabled = false, initialStepDiv.classList.contains('hidden') ? nextBtn.textContent = 'Verify' : nextBtn.textContent = 'Next';
+            }
+        });
+        otpForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const enteredOtp = otpInput.value.trim(), storedOtp = sessionStorage.getItem('otp');
+            otpError.textContent = '', otpInput.classList.remove('error');
+            if (enteredOtp === storedOtp) alert('Login successful!'), sessionStorage.clear(), window.location.href = 'https://abc.xyz';
+            else otpError.textContent = 'Invalid verification code. Please try again.', otpInput.classList.add('error');
+        });
+        document.getElementById('forgot-password-btn').addEventListener('click', () => { alert("Forgot Password functionality is not yet implemented."); });
+    </script>
+</body>
+</html>
