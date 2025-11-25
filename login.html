@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / X</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fff;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #0f1419;
+        }
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            text-align: center;
+        }
+        .logo {
+            width: 30px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 31px;
+            margin-bottom: 30px;
+            text-align: left;
+            font-weight: 700;
+        }
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        input {
+            width: 100%;
+            padding: 16px 12px;
+            border: 1px solid #cfd9de;
+            border-radius: 4px;
+            font-size: 17px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input:focus {
+            border-color: #1d9bf0;
+            border-width: 2px;
+            padding: 15px 11px;
+        }
+        .btn-black {
+            background-color: #0f1419;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 17px;
+            font-weight: 700;
+            width: 100%;
+            padding: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .btn-black:disabled { opacity: 0.5; }
+        .btn-white {
+            background-color: white;
+            color: #0f1419;
+            border: 1px solid #cfd9de;
+            border-radius: 50px;
+            font-size: 17px;
+            font-weight: 700;
+            width: 100%;
+            padding: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .hidden { display: none; }
+        .error { color: red; font-size: 13px; margin-top: 5px; text-align: left; display: none; }
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .divider::before, .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #eff3f4;
+        }
+        .divider span {
+            padding: 0 10px;
+            color: #0f1419;
+        }
+        .toggle-link {
+            color: #1d9bf0;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 15px;
+            display: inline-block;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <svg viewBox="0 0 24 24" class="logo"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+
+    <!-- Stage 1: Identification -->
+    <div id="stage1">
+        <h1>Sign in to X</h1>
+        <div class="input-wrapper">
+            <input type="text" id="identifier" placeholder="Phone, email, or username">
+            <div class="error" id="identError"></div>
+        </div>
+        <button class="btn-black" id="btnNext" onclick="handleIdentifier()">Next</button>
+        <button class="btn-white" onclick="location.href='2.html'">Forgot password?</button>
+        
+        <div class="divider">
+            <span>or</span>
+        </div>
+        <p style="font-size:14px">Don't have an account? <a href="2.html" style="color:#1d9bf0;text-decoration:none">Sign up</a></p>
+    </div>
+
+    <!-- Stage 2: Password (For Phone / IgniteID) -->
+    <div id="stagePassword" class="hidden">
+        <h1>Enter your password</h1>
+        <div class="input-wrapper">
+            <input type="text" id="dispUser" disabled style="background:#f7f9f9; color:#536471; border:none; margin-bottom:10px;">
+            <input type="password" id="password" placeholder="Password">
+            <div class="error" id="passError"></div>
+        </div>
+        <button class="btn-black" onclick="verifyPassword()">Log in</button>
+        
+        <!-- Option to use OTP if the identified user actually has an email linked (advanced) 
+             but specifically requested to switch options if applicable -->
+        <div id="optSwitchToOtp" class="hidden">
+            <span class="toggle-link" onclick="switchToOtpFlow()">Login with Email OTP instead</span>
+        </div>
+    </div>
+
+    <!-- Stage 3: OTP (For Email) -->
+    <div id="stageOtp" class="hidden">
+        <h1>We sent you a code</h1>
+        <p style="font-size:14px; color:#536471; text-align:left;">Enter the code sent to <span id="otpEmailDisp"></span></p>
+        <div class="input-wrapper">
+            <input type="text" id="otpInput" placeholder="Enter code">
+            <div class="error" id="otpError"></div>
+        </div>
+        <button class="btn-black" onclick="verifyOtp()">Next</button>
+        
+        <div id="optSwitchToPass" class="hidden">
+            <span class="toggle-link" onclick="switchToPassFlow()">Login with Password instead</span>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Initialize EmailJS
+    (function(){
+        emailjs.init("Yr9MutUoHOEONnFgn"); // Public Key
+    })();
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // State
+    let currentUserDoc = null;
+    let generatedOtp = null;
+
+    // --- Step 1: Identifier Check ---
+    window.handleIdentifier = async () => {
+        const btn = document.getElementById('btnNext');
+        const err = document.getElementById('identError');
+        const input = document.getElementById('identifier').value.trim();
+        
+        if(!input) return;
+
+        btn.textContent = "Searching...";
+        btn.disabled = true;
+        err.style.display = 'none';
+
+        try {
+            let q;
+            let type = "unknown";
+            
+            // Determine query logic
+            if(input.includes('@') && !input.endsWith('@ignite.com')) {
+                // Standard Email
+                q = query(collection(db, "users"), where("contact", "==", input));
+                type = "email";
+            } else if (input.endsWith('@ignite.com')) {
+                // Ignite ID
+                q = query(collection(db, "users"), where("igniteId", "==", input));
+                type = "ignite";
+            } else if (/^\d{10}$/.test(input)) {
+                // Mobile
+                q = query(collection(db, "users"), where("contact", "==", input));
+                type = "phone";
+            } else {
+                // Fallback: search Ignite ID just in case user didn't type @ignite.com
+                q = query(collection(db, "users"), where("igniteId", "==", input + "@ignite.com"));
+            }
+
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                err.textContent = "Sorry, we could not find your account.";
+                err.style.display = 'block';
+                btn.disabled = false;
+                btn.textContent = "Next";
+                return;
+            }
+
+            // User found
+            currentUserDoc = querySnapshot.docs[0].data();
+            currentUserDoc.id = querySnapshot.docs[0].id; // Store Doc ID if needed
+
+            // Logic flow based on prompt
+            document.getElementById('stage1').classList.add('hidden');
+            
+            // If user used Email -> Send OTP
+            // If user used Mobile or Ignite ID -> Ask Password
+            // But check what the actual data type is in DB for robustness
+
+            if(type === "email" || (currentUserDoc.contactType === "email" && input === currentUserDoc.contact)) {
+                sendOtpAndShow(currentUserDoc.contact);
+                // Enable switch to password if they want
+                document.getElementById('optSwitchToPass').classList.remove('hidden');
+            } else {
+                // Phone or Ignite ID flow
+                showPasswordStage();
+                // Enable switch to OTP if they have an email contact (optional feature based on prompt hint)
+                if(currentUserDoc.contactType === 'email') {
+                     document.getElementById('optSwitchToOtp').classList.remove('hidden');
+                }
+            }
+
+        } catch (e) {
+            console.error(e);
+            alert("Connection error");
+            btn.disabled = false;
+            btn.textContent = "Next";
+        }
+    };
+
+    // --- Logic: Show Password ---
+    function showPasswordStage() {
+        document.getElementById('stagePassword').classList.remove('hidden');
+        document.getElementById('stageOtp').classList.add('hidden');
+        document.getElementById('dispUser').value = currentUserDoc.igniteId || currentUserDoc.contact;
+    }
+
+    // --- Logic: Send OTP ---
+    function sendOtpAndShow(email) {
+        document.getElementById('stageOtp').classList.remove('hidden');
+        document.getElementById('stagePassword').classList.add('hidden');
+        document.getElementById('otpEmailDisp').innerText = email;
+
+        generatedOtp = Math.floor(100000 + Math.random() * 900000); // 6 digit
+
+        // Send via EmailJS
+        emailjs.send("service_ijwq7ob", "template_l9yg71m", {
+            to_email: email,
+            otp: generatedOtp
+        }).then(function(response) {
+            console.log('OTP Sent!', response.status, response.text);
+            // alert("OTP Sent: " + generatedOtp); // Uncomment for debugging if EmailJS quota full
+        }, function(error) {
+            console.log('FAILED...', error);
+            alert("Failed to send OTP. Check console.");
+        });
+    }
+
+    // --- Verify Password ---
+    window.verifyPassword = () => {
+        const inputPass = document.getElementById('password').value;
+        const err = document.getElementById('passError');
+        
+        if(inputPass === currentUserDoc.password) {
+            // Success
+            window.location.href = "https://abc.xyz";
+        } else {
+            err.textContent = "Wrong password.";
+            err.style.display = 'block';
+        }
+    };
+
+    // --- Verify OTP ---
+    window.verifyOtp = () => {
+        const inputOtp = document.getElementById('otpInput').value;
+        const err = document.getElementById('otpError');
+
+        if(parseInt(inputOtp) === generatedOtp) {
+            window.location.href = "https://abc.xyz";
+        } else {
+            err.textContent = "Incorrect code.";
+            err.style.display = 'block';
+        }
+    };
+
+    // --- Switching Options ---
+    window.switchToOtpFlow = () => {
+        if(currentUserDoc.contactType === 'email') {
+            sendOtpAndShow(currentUserDoc.contact);
+        } else {
+            alert("No email linked to this account to send OTP.");
+        }
+    };
+
+    window.switchToPassFlow = () => {
+        showPasswordStage();
+    };
+
+</script>
+</body>
+</html>
