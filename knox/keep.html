@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ignite Mobile 2025</title>
+    <title>Ignite Mobile Pro</title>
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -15,15 +15,15 @@
 
     <style>
         :root {
-            --bg-body: #F0F2F5;
-            --bg-surface: #FFFFFF;
+            --bg-body: #F2F4F8;
+            --bg-card: #FFFFFF;
             --primary: #0B57D0;
-            --primary-bg: #D3E3FD;
+            --primary-light: #D3E3FD;
             --text-main: #1F1F1F;
-            --text-sec: #444746;
+            --text-sec: #555;
             --border: #E0E2E0;
-            --radius-lg: 24px;
-            --sidebar-width: 280px;
+            --radius: 16px;
+            --floating-bg: #2d2e30; /* Dark menu like iOS */
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -33,232 +33,243 @@
             background-color: var(--bg-body);
             color: var(--text-main);
             margin: 0;
-            display: flex;
             height: 100vh;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* --- SIDEBAR (Mobile Drawer) --- */
-        .sidebar-backdrop {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 49;
-            display: none; opacity: 0; transition: opacity 0.3s;
-        }
-        .sidebar-backdrop.active { display: block; opacity: 1; }
-
-        .sidebar {
-            width: var(--sidebar-width);
-            background: #fff;
-            display: flex; flex-direction: column;
-            padding: 12px;
-            position: fixed; left: 0; top: 0; bottom: 0;
-            z-index: 50;
-            transform: translateX(-100%);
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 2px 0 12px rgba(0,0,0,0.1);
-        }
-        .sidebar.open { transform: translateX(0); }
-
-        /* Desktop Sidebar behavior */
-        @media (min-width: 769px) {
-            .sidebar { position: relative; transform: translateX(0); box-shadow: none; border-right: 1px solid var(--border); }
-            .sidebar-backdrop { display: none !important; }
-            .menu-toggle { display: none; } /* Hide hamburger on desktop if wanted, or keep for collapse */
+        /* --- 1. HEADER & SEARCH --- */
+        .header {
+            height: 60px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            gap: 10px;
+            z-index: 10;
         }
 
-        .brand-area { padding: 16px; font-size: 22px; font-weight: 700; color: var(--primary); display: flex; gap: 10px; align-items: center; }
-        .create-btn { background: var(--primary-bg); color: #001d35; border: none; padding: 16px; border-radius: 16px; font-weight: 600; display: flex; align-items: center; gap: 12px; margin-bottom: 10px; cursor: pointer; }
-        .nav-item { padding: 14px 16px; border-radius: 24px; color: var(--text-sec); font-weight: 500; display: flex; gap: 16px; margin-bottom: 4px; cursor: pointer; }
-        .nav-item.active { background: #c2e7ff; color: #001d35; font-weight: 600; }
-
-        /* --- MAIN CONTENT --- */
-        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; width: 100%; }
-
-        .top-bar {
-            height: 60px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; background: var(--bg-surface); border-bottom: 1px solid var(--border);
-        }
-
-        .menu-toggle { font-size: 20px; background: none; border: none; padding: 8px; cursor: pointer; }
+        .menu-btn { font-size: 20px; padding: 8px; background: none; border: none; cursor: pointer; color: var(--text-sec); }
         
-        .search-bar {
-            flex: 1; margin: 0 15px; background: #E9EEF6; height: 40px; border-radius: 20px; display: flex; align-items: center; padding: 0 15px;
+        .search-box {
+            flex: 1;
+            background: #EFF1F5;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            font-size: 15px;
         }
-        .search-bar input { border: none; background: transparent; flex: 1; outline: none; font-size: 16px; font-family: inherit; }
+        .search-box input { background: transparent; border: none; outline: none; flex: 1; margin-left: 8px; font-family: inherit; font-size: 15px; }
 
-        .profile-trigger { width: 35px; height: 35px; border-radius: 50%; background: var(--primary); color: white; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 16px; cursor: pointer; }
+        .profile-pic { width: 36px; height: 36px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        /* Notes Grid */
-        .notes-area {
-            flex: 1; overflow-y: auto; padding: 15px;
+        /* --- 2. NOTES GRID --- */
+        .content-area { flex: 1; overflow-y: auto; padding: 15px; position: relative; }
+        
+        .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(100%, 1fr)); /* Mobile default: 1 column */
-            gap: 12px; align-content: start;
+            grid-template-columns: 1fr; /* Single column for small screens */
+            gap: 12px;
+            padding-bottom: 80px; /* Space for FAB */
         }
+        
+        /* 2 Columns on slightly larger phones */
+        @media (min-width: 400px) { .grid { grid-template-columns: 1fr 1fr; } }
 
-        @media (min-width: 600px) {
-            .notes-area { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); padding: 25px; }
-        }
-
-        .note-card {
-            background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 16px;
-            height: 140px; display: flex; flex-direction: column; overflow: hidden; position: relative;
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 16px;
+            min-height: 120px;
+            border: 1px solid transparent;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex; flex-direction: column;
+            transition: 0.2s;
         }
-        .note-title { font-weight: 600; font-size: 16px; margin-bottom: 8px; }
-        .note-body { font-size: 14px; color: var(--text-sec); line-height: 1.4; }
+        .card:active { transform: scale(0.98); background: #fafafa; }
+        .card-title { font-weight: 700; font-size: 16px; margin-bottom: 6px; }
+        .card-body { font-size: 14px; color: var(--text-sec); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
 
-        /* --- FULL SCREEN EDITOR MODAL --- */
-        .editor-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff; z-index: 100;
+        /* Floating Add Button (FAB) */
+        .fab {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 56px; height: 56px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: var(--primary);
+            cursor: pointer;
+            z-index: 20;
+            border: 1px solid var(--primary-light);
+        }
+
+        /* --- 3. EDITOR (Full Screen) --- */
+        .editor {
+            position: fixed; inset: 0; background: #fff; z-index: 100;
             display: none; flex-direction: column;
         }
-        .editor-overlay.open { display: flex; animation: slideUp 0.25s ease-out; }
-        
+        .editor.open { display: flex; animation: slideUp 0.25s cubic-bezier(0.2, 0, 0, 1); }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        .editor-header {
-            padding: 10px 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #fff;
-        }
+        .editor-nav { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
+        .status-badge { font-size: 12px; font-weight: 600; color: #137333; opacity: 0; transition: 0.3s; background: #E6F4EA; padding: 4px 10px; border-radius: 10px; }
         
-        /* Mobile Tabs in Editor */
-        .mobile-tabs {
-            display: flex; border-bottom: 1px solid var(--border); background: #f8f9fa;
-        }
-        .m-tab {
-            flex: 1; text-align: center; padding: 12px; font-size: 14px; font-weight: 500; color: #666; border-bottom: 2px solid transparent; cursor: pointer;
-        }
-        .m-tab.active { color: var(--primary); border-bottom-color: var(--primary); background: #fff; }
-
-        .editor-body { flex: 1; display: flex; overflow: hidden; position: relative; }
-
-        /* View: Write */
-        .view-write { flex: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; }
-        .inp-title { font-size: 24px; font-weight: 700; border: none; outline: none; margin-bottom: 15px; font-family: inherit; width: 100%; }
-        .inp-content { font-size: 16px; line-height: 1.6; border: none; outline: none; flex: 1; resize: none; font-family: inherit; color: var(--text-sec); }
-
-        /* View: Tools */
-        .view-tools { flex: 1; padding: 20px; background: #F8F9FA; overflow-y: auto; display: none; }
-        .view-tools.active { display: block; }
+        .editor-content { flex: 1; display: flex; flex-direction: column; padding: 20px; overflow-y: auto; position: relative; }
         
-        /* Desktop: Show both side by side */
-        @media (min-width: 800px) {
-            .mobile-tabs { display: none; } /* Hide tabs on desktop */
-            .view-write { border-right: 1px solid var(--border); }
-            .view-tools { display: block; width: 300px; border-left: 1px solid var(--border); flex: none; }
+        .inp-title { font-size: 24px; font-weight: 800; border: none; outline: none; margin-bottom: 15px; font-family: inherit; width: 100%; }
+        .inp-body { font-size: 17px; line-height: 1.6; border: none; outline: none; flex: 1; resize: none; font-family: inherit; color: #333; -webkit-overflow-scrolling: touch; }
+
+        /* --- 4. FLOATING CONTEXT MENU (The Magic Part) --- */
+        .floating-menu {
+            position: absolute;
+            background: var(--floating-bg);
+            border-radius: 30px;
+            padding: 0 10px;
+            height: 44px;
+            display: none; /* Flex when active */
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 200;
+            transform: translateX(-50%);
+            animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            white-space: nowrap;
+        }
+        @keyframes popIn { from { transform: translateX(-50%) scale(0.8); opacity: 0; } to { transform: translateX(-50%) scale(1); opacity: 1; } }
+        
+        /* Triangle Pointer */
+        .floating-menu::after {
+            content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
+            border-width: 6px 6px 0; border-style: solid; border-color: var(--floating-bg) transparent transparent transparent;
         }
 
-        /* Smart Cards */
-        .smart-card { background: #fff; border-radius: 12px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        .smart-head { font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 10px; display: flex; gap: 8px; align-items: center; }
-        .smart-btn { width: 100%; padding: 10px; border-radius: 8px; border: none; background: var(--primary); color: white; font-weight: 600; font-size: 14px; }
+        .float-btn {
+            background: transparent; border: none; color: white;
+            font-size: 13px; font-weight: 500; padding: 0 10px;
+            height: 100%; cursor: pointer; display: flex; align-items: center; gap: 6px;
+        }
+        .float-btn:active { opacity: 0.7; }
+        .divider { width: 1px; height: 16px; background: rgba(255,255,255,0.3); }
 
-        /* Profile Popup */
-        .profile-popup {
+        /* --- 5. BOTTOM SHEET (Results) --- */
+        .bottom-sheet {
             position: fixed; bottom: 0; left: 0; width: 100%;
-            background: #fff; border-radius: 24px 24px 0 0; padding: 30px;
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.2); z-index: 200;
-            transform: translateY(100%); transition: transform 0.3s;
-            text-align: center;
+            background: #fff;
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.2);
+            z-index: 300;
+            transform: translateY(110%);
+            transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+            max-height: 60vh;
+            display: flex; flex-direction: column;
         }
-        .profile-popup.active { transform: translateY(0); }
-        .profile-backdrop { position: fixed; inset:0; background:rgba(0,0,0,0.5); z-index:199; display:none; }
-        .profile-backdrop.active { display:block; }
+        .bottom-sheet.open { transform: translateY(0); }
+        
+        .sheet-handle { width: 40px; height: 5px; background: #ddd; border-radius: 5px; margin: 12px auto; }
+        .sheet-content { padding: 0 25px 30px 25px; overflow-y: auto; }
+        .sheet-title { font-size: 18px; font-weight: 700; margin-bottom: 10px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+
+        /* --- 6. SIDEBAR --- */
+        .sidebar {
+            position: fixed; inset: 0; z-index: 500; pointer-events: none;
+        }
+        .sidebar-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.6); opacity: 0; transition: 0.3s; }
+        .sidebar-panel {
+            position: absolute; top: 0; bottom: 0; left: 0;
+            width: 85vw; max-width: 300px;
+            background: #fff;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
+            padding: 20px; display: flex; flex-direction: column;
+            pointer-events: auto;
+        }
+        .sidebar.active { pointer-events: auto; }
+        .sidebar.active .sidebar-bg { opacity: 1; }
+        .sidebar.active .sidebar-panel { transform: translateX(0); }
+
+        .nav-link { padding: 15px; font-size: 16px; font-weight: 500; color: #333; border-radius: 12px; margin-bottom: 5px; display: flex; align-items: center; gap: 15px; }
+        .nav-link.active { background: var(--primary-light); color: var(--primary); font-weight: 700; }
+
+        .hidden { display: none !important; }
 
     </style>
 </head>
 <body>
 
     <!-- SIDEBAR -->
-    <div class="sidebar-backdrop" onclick="toggleSidebar()"></div>
     <div class="sidebar" id="sidebar">
-        <div class="brand-area">
-            <i class="fa-solid fa-bolt"></i> Ignite Mobile
-        </div>
-        <button class="create-btn" onclick="createNewNote()">
-            <i class="fa-solid fa-plus"></i> New Note
-        </button>
-        <div class="nav-item active"><i class="fa-regular fa-lightbulb"></i> Notes</div>
-        <div class="nav-item"><i class="fa-regular fa-bell"></i> Reminders</div>
-        <div class="nav-item"><i class="fa-solid fa-archive"></i> Archive</div>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-        <div class="top-bar">
-            <button class="menu-toggle" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
-            <div class="search-bar">
-                <i class="fa-solid fa-search" style="color: #888;"></i>
-                <input id="searchInp" type="text" placeholder="Search..." onkeyup="filterNotes()">
+        <div class="sidebar-bg" onclick="toggleSidebar()"></div>
+        <div class="sidebar-panel">
+            <h2 style="margin: 0 0 30px 10px; display:flex; gap:10px; align-items:center;">
+                <i class="fa-solid fa-fire" style="color:var(--primary)"></i> Ignite
+            </h2>
+            <div class="nav-link active"><i class="fa-regular fa-file"></i> Notes</div>
+            <div class="nav-link"><i class="fa-solid fa-users"></i> Shared</div>
+            <div class="nav-link"><i class="fa-regular fa-star"></i> Favorites</div>
+            <div class="nav-link"><i class="fa-solid fa-gear"></i> Settings</div>
+            
+            <div style="margin-top:auto; border-top:1px solid #eee; padding-top:20px;">
+                <div style="font-weight:bold;" id="sideName">User</div>
+                <div style="font-size:13px; color:#888;" id="sideEmail">@ignite.com</div>
+                <button onclick="logout()" style="margin-top:15px; width:100%; padding:12px; border:1px solid #ddd; background:none; border-radius:10px; font-weight:bold;">Log Out</button>
             </div>
-            <div class="profile-trigger" id="profileBtn" onclick="toggleProfile()">U</div>
-        </div>
-
-        <div class="notes-area" id="notesGrid">
-            <!-- JS Injected -->
         </div>
     </div>
+
+    <!-- MAIN APP -->
+    <div class="header">
+        <button class="menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
+        <div class="search-box">
+            <i class="fa-solid fa-search" style="color:#888"></i>
+            <input type="text" placeholder="Search notes..." id="searchInp" onkeyup="filterNotes()">
+        </div>
+        <div class="profile-pic" id="headerAvatar">U</div>
+    </div>
+
+    <div class="content-area">
+        <div class="grid" id="notesGrid">
+            <!-- Notes here -->
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab" onclick="createNote()"><i class="fa-solid fa-plus"></i></div>
 
     <!-- FULL SCREEN EDITOR -->
-    <div class="editor-overlay" id="editorOverlay">
-        
-        <!-- Editor Header -->
-        <div class="editor-header">
-            <button onclick="closeEditor()" style="background:none; border:none; font-size:24px; color:#444;"><i class="fa-solid fa-arrow-left"></i></button>
-            <div id="saveStatus" style="font-size:12px; color:green; font-weight:bold; opacity:0;">Saved</div>
-            <button onclick="deleteNote()" style="background:none; border:none; font-size:18px; color:#d93025;"><i class="fa-regular fa-trash-can"></i></button>
+    <div class="editor" id="editor">
+        <div class="editor-nav">
+            <button onclick="closeEditor()" style="border:none; background:none; font-size:22px; color:#444;"><i class="fa-solid fa-chevron-left"></i></button>
+            <div class="status-badge" id="saveStatus">Saved</div>
+            <button onclick="deleteNote()" style="border:none; background:none; font-size:18px; color:#d93025;"><i class="fa-regular fa-trash-can"></i></button>
         </div>
-
-        <!-- Mobile Tabs (Visible only on mobile via CSS) -->
-        <div class="mobile-tabs">
-            <div class="m-tab active" onclick="switchTab('write')" id="tabWrite">Write</div>
-            <div class="m-tab" onclick="switchTab('tools')" id="tabTools">AI Tools</div>
-        </div>
-
-        <!-- Body -->
-        <div class="editor-body">
+        <div class="editor-content" id="editorContainer">
+            <input type="text" class="inp-title" id="eTitle" placeholder="Title">
+            <textarea class="inp-body" id="eContent" placeholder="Start typing... Select text for AI tools."></textarea>
             
-            <!-- Writing Area -->
-            <div class="view-write" id="viewWrite">
-                <input type="text" class="inp-title" id="eTitle" placeholder="Title">
-                <textarea class="inp-content" id="eContent" placeholder="Start typing..."></textarea>
+            <!-- FLOATING CONTEXT MENU -->
+            <div class="floating-menu" id="floatMenu">
+                <button class="float-btn" onclick="aiAction('wiki')"><i class="fa-brands fa-wikipedia-w"></i> Wiki</button>
+                <div class="divider"></div>
+                <button class="float-btn" onclick="aiAction('translate')"><i class="fa-solid fa-language"></i> Trans</button>
+                <div class="divider"></div>
+                <button class="float-btn" onclick="aiAction('speak')"><i class="fa-solid fa-volume-high"></i></button>
             </div>
-
-            <!-- Smart Tools Area -->
-            <div class="view-tools" id="viewTools">
-                <div class="smart-card">
-                    <div class="smart-head"><i class="fa-brands fa-wikipedia-w"></i> Wiki Search</div>
-                    <div id="wikiResult" style="font-size:13px; color:#666; margin-bottom:10px; min-height:40px;">Select text & tap search.</div>
-                    <button class="smart-btn" onclick="fetchWiki()">Search Highlight</button>
-                </div>
-
-                <div class="smart-card">
-                    <div class="smart-head"><i class="fa-solid fa-language"></i> Translate</div>
-                    <select id="langSelect" style="width:100%; margin-bottom:10px; padding:8px;">
-                        <option value="es">Spanish</option>
-                        <option value="fr">French</option>
-                        <option value="ja">Japanese</option>
-                    </select>
-                    <div id="transResult" style="font-size:13px; margin-bottom:10px;"></div>
-                    <button class="smart-btn" style="background:#333;" onclick="fetchTranslate()">Translate</button>
-                </div>
-
-                <div class="smart-card">
-                    <div class="smart-head"><i class="fa-solid fa-user-plus"></i> Share</div>
-                    <button class="smart-btn" style="background:#fff; color:var(--primary); border:1px solid var(--primary);" onclick="shareNote()">Invite by ID</button>
-                </div>
-            </div>
-
         </div>
     </div>
 
-    <!-- PROFILE SHEET -->
-    <div class="profile-backdrop" id="profileBackdrop" onclick="toggleProfile()"></div>
-    <div class="profile-popup" id="profilePopup">
-        <div style="width:60px; height:60px; background:var(--primary); border-radius:50%; color:fff; display:flex; justify-content:center; align-items:center; font-size:24px; color:white; margin:0 auto 10px auto;" id="sheetAvatar">U</div>
-        <h2 id="sheetName" style="margin:0;">User</h2>
-        <p id="sheetEmail" style="color:#666; margin:5px 0 20px 0;">user@ignite.com</p>
-        <button onclick="logout()" style="width:100%; padding:15px; border-radius:30px; border:1px solid #ccc; background:transparent; font-size:16px;">Sign Out</button>
+    <!-- BOTTOM SHEET (Results) -->
+    <div class="bottom-sheet" id="resultSheet">
+        <div class="sheet-handle" onclick="closeSheet()"></div>
+        <div class="sheet-content">
+            <div class="sheet-title" id="sheetTitle">Result</div>
+            <div id="sheetBody" style="font-size:15px; line-height:1.6; color:#333;"></div>
+            <button onclick="closeSheet()" style="width:100%; padding:15px; background:#f0f0f0; border:none; border-radius:12px; margin-top:20px; font-weight:bold; color:#333;">Close</button>
+        </div>
     </div>
 
     <script>
@@ -285,79 +296,50 @@
             if(!sess) { window.location.href="index.html"; return; }
             user = JSON.parse(sess)[0];
             
-            // UI Profile
-            document.getElementById('profileBtn').innerText = user.name.charAt(0);
-            document.getElementById('sheetAvatar').innerText = user.name.charAt(0);
-            document.getElementById('sheetName').innerText = user.name;
-            document.getElementById('sheetEmail').innerText = user.igniteId || user.email;
-
+            document.getElementById('headerAvatar').innerText = user.name.charAt(0);
+            document.getElementById('sideName').innerText = user.name;
+            document.getElementById('sideEmail').innerText = user.igniteId || user.email;
+            
             loadNotes();
         }
-
         function logout() { localStorage.removeItem('xperts_multi_session'); window.location.href="index.html"; }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
 
-        // --- UI TOGGLES ---
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('open');
-            document.querySelector('.sidebar-backdrop').classList.toggle('active');
-        }
-
-        function toggleProfile() {
-            document.getElementById('profilePopup').classList.toggle('active');
-            document.getElementById('profileBackdrop').classList.toggle('active');
-        }
-
-        function switchTab(tab) {
-            // Only relevant on mobile where .mobile-tabs is visible
-            document.querySelectorAll('.m-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(tab === 'write' ? 'tabWrite' : 'tabTools').classList.add('active');
-            
-            if(tab === 'write') {
-                document.getElementById('viewWrite').style.display = 'flex';
-                document.getElementById('viewTools').classList.remove('active');
-            } else {
-                document.getElementById('viewWrite').style.display = 'none';
-                document.getElementById('viewTools').classList.add('active');
-            }
-        }
-
-        // --- NOTES LOGIC ---
-        async function createNewNote() {
+        // --- NOTES CRUD ---
+        async function createNote() {
             const doc = await db.collection('notes').add({
                 title:"", content:"", ownerId:user.uid, createdAt: firebase.firestore.FieldValue.serverTimestamp()
             });
             openEditor(doc.id);
-            if(window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile
         }
 
         function loadNotes() {
-            db.collection('notes').where('ownerId', '==', user.uid).onSnapshot(snap => {
+            db.collection('notes').where('ownerId','==',user.uid).orderBy('createdAt','desc')
+            .onSnapshot(snap => {
                 const grid = document.getElementById('notesGrid');
                 grid.innerHTML = '';
                 snap.forEach(doc => {
                     const d = doc.data();
-                    const div = document.createElement('div');
-                    div.className = 'note-card';
-                    div.onclick = () => openEditor(doc.id);
-                    div.innerHTML = `<div class="note-title">${d.title||'Untitled'}</div><div class="note-body">${d.content||'No content'}</div>`;
-                    grid.appendChild(div);
+                    const el = document.createElement('div');
+                    el.className = 'card';
+                    el.onclick = () => openEditor(doc.id);
+                    el.innerHTML = `<div class="card-title">${d.title||'Untitled'}</div><div class="card-body">${d.content||'No content'}</div>`;
+                    grid.appendChild(el);
                 });
             });
         }
 
         function filterNotes() {
             const term = document.getElementById('searchInp').value.toLowerCase();
-            document.querySelectorAll('.note-card').forEach(card => {
-                card.style.display = card.innerText.toLowerCase().includes(term) ? 'flex' : 'none';
+            document.querySelectorAll('.card').forEach(c => {
+                c.style.display = c.innerText.toLowerCase().includes(term) ? 'flex' : 'none';
             });
         }
 
-        // --- EDITOR LOGIC ---
+        // --- EDITOR & AUTO SAVE ---
         function openEditor(id) {
             currentNoteId = id;
-            document.getElementById('editorOverlay').classList.add('open');
-            switchTab('write'); // Reset to write view
-
+            document.getElementById('editor').classList.add('open');
             unsub = db.collection('notes').doc(id).onSnapshot(doc => {
                 if(!doc.exists) { closeEditor(); return; }
                 const d = doc.data();
@@ -367,18 +349,18 @@
         }
 
         function closeEditor() {
-            document.getElementById('editorOverlay').classList.remove('open');
+            document.getElementById('editor').classList.remove('open');
             if(unsub) unsub();
             currentNoteId = null;
+            document.getElementById('floatMenu').style.display = 'none';
         }
 
-        // Auto Save
-        let timer;
-        const save = () => {
+        let saveTimer;
+        const autoSave = () => {
             document.getElementById('saveStatus').style.opacity = 1;
             document.getElementById('saveStatus').innerText = "Saving...";
-            clearTimeout(timer);
-            timer = setTimeout(() => {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(() => {
                 db.collection('notes').doc(currentNoteId).update({
                     title: document.getElementById('eTitle').value,
                     content: document.getElementById('eContent').value
@@ -388,48 +370,86 @@
                 });
             }, 500);
         }
-        document.getElementById('eTitle').addEventListener('input', save);
-        document.getElementById('eContent').addEventListener('input', save);
+        document.getElementById('eTitle').addEventListener('input', autoSave);
+        document.getElementById('eContent').addEventListener('input', autoSave);
 
         async function deleteNote() {
-            if(confirm('Delete?')) { await db.collection('notes').doc(currentNoteId).delete(); closeEditor(); }
+            if(confirm("Delete?")) { await db.collection('notes').doc(currentNoteId).delete(); closeEditor(); }
         }
 
-        // --- SMART TOOLS ---
-        function getSel() { return window.getSelection().toString().trim(); }
 
-        async function fetchWiki() {
-            const txt = getSel();
-            const res = document.getElementById('wikiResult');
-            if(!txt) { res.innerText = "Select text first."; return; }
-            res.innerText = "Searching...";
-            try {
-                const req = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(txt)}`);
-                const data = await req.json();
-                res.innerHTML = `<b>${data.title}</b><br>${data.extract}`;
-            } catch(e) { res.innerText = "No results."; }
-        }
+        // --- THE FLOATING MENU LOGIC (CORE FEATURE) ---
+        const textArea = document.getElementById('eContent');
+        const floatMenu = document.getElementById('floatMenu');
 
-        async function fetchTranslate() {
-            const txt = getSel();
-            const res = document.getElementById('transResult');
-            const lang = document.getElementById('langSelect').value;
-            if(!txt) { res.innerText = "Select text first."; return; }
-            res.innerText = "Translating...";
-            try {
-                const req = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(txt)}&langpair=en|${lang}`);
-                const data = await req.json();
-                res.innerText = data.responseData.translatedText;
-            } catch(e) { res.innerText = "Error."; }
-        }
+        // Handle Selection
+        document.addEventListener('selectionchange', () => {
+            const selection = window.getSelection();
+            
+            // Only show if selection is inside our editor text area and not empty
+            if (selection.toString().trim().length > 0 && document.activeElement === textArea) {
+                const range = selection.getRangeAt(0);
+                const rect = range.getBoundingClientRect();
+                
+                // Position Menu above text (math handles scroll)
+                // rect.top is relative to viewport. 
+                // We show it 50px above selection center
+                floatMenu.style.top = (rect.top - 55) + 'px';
+                floatMenu.style.left = (rect.left + (rect.width / 2)) + 'px';
+                floatMenu.style.display = 'flex';
+            } else {
+                floatMenu.style.display = 'none';
+            }
+        });
 
-        async function shareNote() {
-            const email = prompt("Ignite ID (@ignite.com):");
-            if(email && email.endsWith('@ignite.com')) {
-                await db.collection('notes').doc(currentNoteId).update({
-                    sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
-                });
-                alert('Shared');
+        // Prevents menu from sticking when scrolling
+        textArea.addEventListener('scroll', () => { floatMenu.style.display = 'none'; });
+
+        // --- AI TOOLS ACTIONS ---
+        function closeSheet() { document.getElementById('resultSheet').classList.remove('open'); }
+
+        async function aiAction(type) {
+            const text = window.getSelection().toString().trim();
+            if(!text) return;
+            
+            const sheet = document.getElementById('resultSheet');
+            const title = document.getElementById('sheetTitle');
+            const body = document.getElementById('sheetBody');
+
+            if(type === 'speak') {
+                const u = new SpeechSynthesisUtterance(text);
+                window.speechSynthesis.speak(u);
+                return; // No sheet needed
+            }
+
+            sheet.classList.add('open');
+            body.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Loading...';
+
+            if(type === 'wiki') {
+                title.innerHTML = '<i class="fa-brands fa-wikipedia-w"></i> Wikipedia';
+                try {
+                    const req = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(text)}`);
+                    const data = await req.json();
+                    if(data.type === 'standard') {
+                        body.innerHTML = `
+                            ${data.thumbnail ? `<img src="${data.thumbnail.source}" style="width:100%; height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px;">` : ''}
+                            <b>${data.title}</b><br>${data.extract}
+                        `;
+                    } else { body.innerText = "No specific page found."; }
+                } catch(e) { body.innerText = "Error fetching Wiki."; }
+            }
+            
+            if(type === 'translate') {
+                title.innerHTML = '<i class="fa-solid fa-language"></i> Translation';
+                try {
+                    // Detect lang? For now simplified En->Es/Fr
+                    const req = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`);
+                    const data = await req.json();
+                    body.innerHTML = `
+                        <div style="font-size:12px; color:#888;">Spanish:</div>
+                        <div style="font-size:20px; font-weight:bold;">${data.responseData.translatedText}</div>
+                    `;
+                } catch(e) { body.innerText = "Translation Error."; }
             }
         }
 
