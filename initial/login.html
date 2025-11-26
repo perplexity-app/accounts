@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Xperts Ecosystem</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 450px; padding: 30px; }
+        .logo { font-size: 40px; text-align: center; margin-bottom: 30px; font-weight: bold; }
+        .input-group input { width: 100%; padding: 15px; border: 1px solid #cfd9de; border-radius: 5px; margin-bottom: 20px; font-size: 16px; }
+        .btn-black { width: 100%; padding: 15px; background: #000; color: #fff; border: none; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .hidden { display: none; }
+        .divider { text-align: center; margin: 20px 0; color: #536471; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="logo">𝕏</div>
+
+    <!-- Step 1: ID -->
+    <div id="s1">
+        <h1 style="margin-bottom:30px;">Sign in to Xperts</h1>
+        <div class="input-group"><input type="text" id="idInput" placeholder="Phone, email, or ignite ID"></div>
+        <button class="btn-black" onclick="findUser()">Next</button>
+        <p class="divider"><a href="2.html" style="color:#1d9bf0; text-decoration:none;">Create account</a></p>
+    </div>
+
+    <!-- Step 2: Pass/OTP -->
+    <div id="s2" class="hidden">
+        <h2 id="welcomeId"></h2>
+        <div class="input-group"><input type="password" id="passInput" placeholder="Password"></div>
+        <div class="input-group hidden" id="otpGroup"><input type="text" id="otpInput" placeholder="Enter Email OTP"></div>
+        <button class="btn-black" onclick="doLogin()">Log in</button>
+    </div>
+</div>
+
+<script>
+    // Config
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    emailjs.init("Yr9MutUoHOEONnFgn");
+
+    // 1.html Logic: If ANY user is logged in, redirect. No multi-account ADDING here.
+    const sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
+    if(sessions.length > 0) {
+        window.location.href = "https://abc.xyz"; // Redirect to app
+    }
+
+    let foundUser = null;
+    let otpSent = 0;
+
+    async function findUser() {
+        const val = document.getElementById('idInput').value;
+        if(!val) return;
+
+        let q;
+        if(val.includes('@') && !val.includes('ignite')) q = db.collection('users').where('email','==',val);
+        else if(val.includes('ignite')) q = db.collection('users').where('igniteId','==', (val.includes('@')?val:val+'@ignite.com'));
+        else q = db.collection('users').where('mobile','==',val);
+
+        const snap = await q.get();
+        if(snap.empty) { alert("User not found"); return; }
+        
+        foundUser = { id: snap.docs[0].id, ...snap.docs[0].data() };
+        
+        document.getElementById('s1').classList.add('hidden');
+        document.getElementById('s2').classList.remove('hidden');
+        document.getElementById('welcomeId').innerText = "Hi, " + foundUser.firstName;
+
+        // If email login used, send OTP
+        if(val.includes('@') && !val.includes('ignite')) {
+            document.getElementById('passInput').classList.add('hidden');
+            document.getElementById('otpGroup').classList.remove('hidden');
+            otpSent = Math.floor(100000 + Math.random() * 900000);
+            emailjs.send('service_ijwq7ob', 'template_l9yg71m', { otp: otpSent, to_email: val });
+            alert("OTP Sent to Email");
+        }
+    }
+
+    function doLogin() {
+        const pass = document.getElementById('passInput').value;
+        const otp = document.getElementById('otpInput').value;
+
+        let success = false;
+
+        if(!document.getElementById('passInput').classList.contains('hidden')) {
+            if(pass === foundUser.password) success = true;
+            else alert("Wrong password");
+        } else {
+            if(parseInt(otp) === otpSent) success = true;
+            else alert("Wrong OTP");
+        }
+
+        if(success) {
+            // Save to Session
+            const newSession = { uid: foundUser.id, name: foundUser.firstName, igniteId: foundUser.igniteId };
+            localStorage.setItem('xperts_multi_session', JSON.stringify([newSession]));
+            window.location.href = "https://abc.xyz";
+        }
+    }
+</script>
+</body>
+</html>
