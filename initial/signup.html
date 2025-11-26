@@ -1,0 +1,250 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - Xperts</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root { --primary: #000; --blue: #1d9bf0; --border: #cfd9de; --text: #0f1419; --gray: #536471; --green: #00ba7c; }
+        body { font-family: sans-serif; display: flex; justify-content: center; color: var(--text); }
+        .container { width: 100%; max-width: 600px; padding: 20px; min-height: 100vh; display: flex; flex-direction: column; }
+        .header { display: flex; justify-content: center; position: relative; padding-bottom: 20px; }
+        .back-btn { position: absolute; left: 0; background: none; border: none; font-size: 20px; cursor: pointer; }
+        .logo { font-size: 30px; font-weight: bold; }
+        .input-group { margin-bottom: 20px; border: 1px solid var(--border); border-radius: 4px; padding: 8px; position: relative; }
+        .input-group:focus-within { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+        .input-group label { display: block; color: var(--gray); font-size: 13px; }
+        .input-group input, select { width: 100%; border: none; outline: none; font-size: 17px; background: transparent; }
+        .btn-next { background-color: var(--primary); color: white; border: none; border-radius: 9999px; padding: 15px; width: 100%; font-weight: bold; cursor: pointer; margin-top: auto; }
+        .btn-next:disabled { opacity: 0.5; cursor: not-allowed; }
+        .step { display: none; }
+        .step.active { display: block; }
+        .icon-check { width: 20px; height: 20px; fill: var(--green); position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: none; }
+        .valid .icon-check { display: block; }
+        .error-msg { color: #f4212e; font-size: 13px; margin-top: 5px; display: none; }
+        .claim-box { margin-top: 10px; padding: 10px; background: #f7f9f9; border-radius: 8px; display: none; }
+        .link { color: var(--blue); cursor: pointer; text-decoration: underline; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <button class="back-btn" onclick="goBack()" id="backBtn" style="display:none;">←</button>
+        <div class="logo">𝕏</div>
+    </div>
+
+    <!-- Step 1: Name -->
+    <div id="step1" class="step active">
+        <h2>Create your account</h2>
+        <div class="input-group">
+            <label>First Name</label>
+            <input type="text" id="fname" oninput="validateStep1()">
+            <svg class="icon-check" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+        </div>
+        <div class="input-group">
+            <label>Last Name</label>
+            <input type="text" id="lname" oninput="validateStep1()">
+            <svg class="icon-check" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+        </div>
+        <button class="btn-next" id="btn1" onclick="nextStep(2)" disabled>Next</button>
+    </div>
+
+    <!-- Step 2: DOB & Gender -->
+    <div id="step2" class="step">
+        <h2>Basic Info</h2>
+        <div class="input-group"><label>Gender</label><select id="gender" onchange="validateStep2()"><option></option><option>Male</option><option>Female</option><option>Prefer not to say</option></select></div>
+        <div style="display:flex; gap:10px;">
+            <div class="input-group" style="flex:1"><label>Month</label><select id="mm" onchange="validateStep2()"></select></div>
+            <div class="input-group" style="flex:1"><label>Day</label><select id="dd" onchange="validateStep2()"></select></div>
+            <div class="input-group" style="flex:1"><label>Year</label><select id="yy" onchange="validateStep2()"></select></div>
+        </div>
+        <button class="btn-next" id="btn2" onclick="nextStep(3)" disabled>Next</button>
+    </div>
+
+    <!-- Step 3: Mobile (Compulsory) & Email (Optional) -->
+    <div id="step3" class="step">
+        <h2>Contact Info</h2>
+        <div class="input-group" id="mobileGroup">
+            <label>Mobile Number (Required)</label>
+            <input type="tel" id="mobile" oninput="checkMobile()" placeholder="10 digits">
+            <svg class="icon-check" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+        </div>
+        <div id="mobileError" class="error-msg"></div>
+
+        <!-- Claim Section -->
+        <div id="claimSection" class="claim-box">
+            <p style="font-size:13px; margin:0 0 10px 0;">This number is registered. Do you have a transfer code?</p>
+            <input type="text" id="transferCode" placeholder="Enter 6-digit code" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;">
+            <div style="margin-top:5px; text-align:right;">
+                <span class="link" onclick="verifyTransferCode()">Verify Code</span>
+            </div>
+        </div>
+
+        <div class="input-group" style="margin-top:20px;">
+            <label>Email (Optional)</label>
+            <input type="email" id="email">
+        </div>
+
+        <button class="btn-next" id="btn3" onclick="nextStep(4)" disabled>Next</button>
+    </div>
+
+    <!-- Step 4: Ignite ID -->
+    <div id="step4" class="step">
+        <h2>Create Ignite ID</h2>
+        <div class="input-group" id="igniteGroup">
+            <label>Ignite ID</label>
+            <input type="text" id="igniteId" oninput="checkIgnite()" placeholder="username">
+            <span style="position:absolute; right:40px; top:35px; color:#536471;">@ignite.com</span>
+            <svg class="icon-check" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+        </div>
+        <div id="igniteError" class="error-msg"></div>
+        <button class="btn-next" id="btn4" onclick="nextStep(5)" disabled>Next</button>
+    </div>
+
+    <!-- Step 5: Password -->
+    <div id="step5" class="step">
+        <h2>Set Password</h2>
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="password" oninput="checkPass()">
+        </div>
+        <button class="btn-next" id="btn5" onclick="finishSignup()" disabled>Sign Up</button>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Fill Date
+    ['January','February','March','April','May','June','July','August','September','October','November','December'].forEach(m => document.getElementById('mm').add(new Option(m,m)));
+    for(let i=1;i<=31;i++) document.getElementById('dd').add(new Option(i,i));
+    for(let i=2025;i>=1900;i--) document.getElementById('yy').add(new Option(i,i));
+
+    let currentStep = 1;
+    let isMobileClaimed = false;
+
+    function nextStep(n) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step'+n).classList.add('active');
+        currentStep = n;
+        if(n>1) document.getElementById('backBtn').style.display='block';
+    }
+    function goBack(){ if(currentStep>1) nextStep(currentStep-1); }
+
+    function validateStep1() {
+        const ok = document.getElementById('fname').value && document.getElementById('lname').value;
+        document.getElementById('btn1').disabled = !ok;
+        if(ok) document.querySelectorAll('#step1 .input-group').forEach(e=>e.classList.add('valid'));
+    }
+    function validateStep2() {
+        document.getElementById('btn2').disabled = !(document.getElementById('gender').value && document.getElementById('mm').value);
+    }
+
+    // Check Mobile with Claim Logic
+    async function checkMobile() {
+        const val = document.getElementById('mobile').value;
+        const group = document.getElementById('mobileGroup');
+        const err = document.getElementById('mobileError');
+        const claimBox = document.getElementById('claimSection');
+        
+        group.classList.remove('valid');
+        err.style.display='none';
+        claimBox.style.display='none';
+        document.getElementById('btn3').disabled=true;
+
+        if(!/^\d{10}$/.test(val)) return;
+
+        // Check DB
+        const snap = await db.collection('users').where('mobile','==',val).get();
+        if(!snap.empty) {
+            err.innerText = "Mobile number already registered.";
+            err.style.display='block';
+            claimBox.style.display='block'; // Show claim option
+        } else {
+            group.classList.add('valid');
+            document.getElementById('btn3').disabled=false;
+            isMobileClaimed = false;
+        }
+    }
+
+    async function verifyTransferCode() {
+        const code = document.getElementById('transferCode').value;
+        const mob = document.getElementById('mobile').value;
+        
+        const snap = await db.collection('users').where('mobile','==',mob).get();
+        let valid = false;
+        snap.forEach(doc => {
+            const data = doc.data();
+            if(data.transferCode === code && data.transferExpiry > Date.now()) {
+                valid = true;
+            }
+        });
+
+        if(valid) {
+            alert("Code verified! You can use this number.");
+            document.getElementById('mobileGroup').classList.add('valid');
+            document.getElementById('btn3').disabled=false;
+            document.getElementById('claimSection').style.display='none';
+            document.getElementById('mobileError').style.display='none';
+            isMobileClaimed = true; // Flag to allow saving duplicate
+        } else {
+            alert("Invalid or expired code.");
+        }
+    }
+
+    async function checkIgnite() {
+        const val = document.getElementById('igniteId').value;
+        const group = document.getElementById('igniteGroup');
+        const err = document.getElementById('igniteError');
+        const btn = document.getElementById('btn4');
+        
+        group.classList.remove('valid');
+        btn.disabled = true;
+        
+        if(/[A-Z]/.test(val)) { err.innerText="No capital letters"; err.style.display='block'; return; }
+        if(!/^[a-z0-9+\-_]+$/.test(val)) { err.innerText="Invalid characters"; err.style.display='block'; return; }
+        
+        err.style.display='none';
+        const fullId = val+'@ignite.com';
+        const snap = await db.collection('users').where('igniteId','==',fullId).get();
+        
+        if(!snap.empty) {
+            err.innerText="ID taken"; err.style.display='block';
+        } else {
+            group.classList.add('valid');
+            btn.disabled=false;
+        }
+    }
+
+    function checkPass() { document.getElementById('btn5').disabled = document.getElementById('password').value.length < 8; }
+
+    function finishSignup() {
+        const data = {
+            firstName: document.getElementById('fname').value,
+            lastName: document.getElementById('lname').value,
+            gender: document.getElementById('gender').value,
+            dob: `${document.getElementById('mm').value} ${document.getElementById('dd').value}, ${document.getElementById('yy').value}`,
+            mobile: document.getElementById('mobile').value,
+            email: document.getElementById('email').value || null,
+            igniteId: document.getElementById('igniteId').value + '@ignite.com',
+            password: document.getElementById('password').value,
+            createdAt: Date.now()
+        };
+
+        db.collection('users').add(data).then((ref) => {
+            // Add to multi-session storage
+            let sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
+            sessions.push({ uid: ref.id, name: data.firstName, igniteId: data.igniteId });
+            localStorage.setItem('xperts_multi_session', JSON.stringify(sessions));
+            window.location.href = "4.html"; // Go to Central Login/Switcher
+        });
+    }
+</script>
+</body>
+</html>
