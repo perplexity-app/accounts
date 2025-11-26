@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,41 +40,61 @@
 </div>
 
 <script>
-    // Config
     const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     emailjs.init("Yr9MutUoHOEONnFgn");
 
-    // 1.html Logic: If ANY user is logged in, redirect. No multi-account ADDING here.
+    // 1. Check Existing Session
     const sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
     if(sessions.length > 0) {
-        window.location.href = "https://abc.xyz"; // Redirect to app
+        window.location.href = "https://abc.xyz"; 
     }
 
-    let foundUser = null;
+    let foundUsers = []; // Array to store multiple accounts
+    let loginType = '';
     let otpSent = 0;
 
     async function findUser() {
-        const val = document.getElementById('idInput').value;
+        const val = document.getElementById('idInput').value.trim();
         if(!val) return;
+        foundUsers = [];
 
         let q;
-        if(val.includes('@') && !val.includes('ignite')) q = db.collection('users').where('email','==',val);
-        else if(val.includes('ignite')) q = db.collection('users').where('igniteId','==', (val.includes('@')?val:val+'@ignite.com'));
-        else q = db.collection('users').where('mobile','==',val);
+        // Determine Query Type
+        if(val.includes('@') && !val.includes('ignite')) {
+            loginType = 'email';
+            q = db.collection('users').where('email','==',val);
+        }
+        else if(val.includes('ignite')) {
+            loginType = 'ignite';
+            q = db.collection('users').where('igniteId','==', (val.includes('@')?val:val+'@ignite.com'));
+        }
+        else {
+            loginType = 'mobile';
+            q = db.collection('users').where('mobile','==',val);
+        }
 
         const snap = await q.get();
         if(snap.empty) { alert("User not found"); return; }
         
-        foundUser = { id: snap.docs[0].id, ...snap.docs[0].data() };
-        
+        // Store ALL matching documents
+        snap.forEach(doc => {
+            foundUsers.push({ id: doc.id, ...doc.data() });
+        });
+
         document.getElementById('s1').classList.add('hidden');
         document.getElementById('s2').classList.remove('hidden');
-        document.getElementById('welcomeId').innerText = "Hi, " + foundUser.firstName;
 
-        // If email login used, send OTP
-        if(val.includes('@') && !val.includes('ignite')) {
+        // Logic for Display Name
+        if(foundUsers.length > 1) {
+            document.getElementById('welcomeId').innerText = `Found ${foundUsers.length} accounts`;
+        } else {
+            document.getElementById('welcomeId').innerText = "Hi, " + foundUsers[0].firstName;
+        }
+
+        // OTP Logic (Only for Email login)
+        if(loginType === 'email') {
             document.getElementById('passInput').classList.add('hidden');
             document.getElementById('otpGroup').classList.remove('hidden');
             otpSent = Math.floor(100000 + Math.random() * 900000);
@@ -88,20 +107,34 @@
         const pass = document.getElementById('passInput').value;
         const otp = document.getElementById('otpInput').value;
 
-        let success = false;
+        let authorized = false;
 
-        if(!document.getElementById('passInput').classList.contains('hidden')) {
-            if(pass === foundUser.password) success = true;
-            else alert("Wrong password");
-        } else {
-            if(parseInt(otp) === otpSent) success = true;
+        if(loginType === 'email') {
+            // Check OTP
+            if(parseInt(otp) === otpSent) authorized = true;
             else alert("Wrong OTP");
+        } else {
+            // Check Password
+            // If ANY account connected to this mobile matches the password, authorize ALL
+            const match = foundUsers.find(u => u.password === pass);
+            if(match) authorized = true;
+            else alert("Wrong password");
         }
 
-        if(success) {
-            // Save to Session
-            const newSession = { uid: foundUser.id, name: foundUser.firstName, igniteId: foundUser.igniteId };
-            localStorage.setItem('xperts_multi_session', JSON.stringify([newSession]));
+        if(authorized) {
+            // Add ALL found users to session
+            let currentSessions = []; // Empty because this is 1.html (fresh login)
+            
+            foundUsers.forEach(user => {
+                currentSessions.push({ 
+                    uid: user.id, 
+                    name: user.firstName, 
+                    igniteId: user.igniteId 
+                });
+            });
+
+            localStorage.setItem('xperts_multi_session', JSON.stringify(currentSessions));
+            localStorage.setItem('xperts_active_index', 0); // Set first as active
             window.location.href = "https://abc.xyz";
         }
     }
