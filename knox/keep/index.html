@@ -2,536 +2,494 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ignite Mobile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ignite OS - Workspace</title>
     
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    
-    <!-- Icons & Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
         :root {
-            --bg-body: #F2F5F8;
-            --bg-card: #FFFFFF;
-            --primary: #0B57D0;
-            --text-main: #1F1F1F;
-            --text-light: #5E5E5E;
-            --border: #E1E3E1;
-            --fab-shadow: 0 4px 12px rgba(11, 87, 208, 0.3);
-            --menu-bg: #2d2e30;
+            --bg: #202124;
+            --sidebar: #252628;
+            --surface: #2d2e30;
+            --hover: #3c4043;
+            --text: #e8eaed;
+            --text-mute: #9aa0a6;
+            --accent: #fbbc04;
+            --blue: #8ab4f8;
+            --red: #f28b82;
+            --border: #5f6368;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
-        body {
-            font-family: 'Outfit', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        /* --- 1. TOP APP BAR --- */
-        .app-bar {
-            height: 60px;
-            background: var(--bg-card);
-            display: flex;
-            align-items: center;
-            padding: 0 16px;
-            border-bottom: 1px solid var(--border);
-            z-index: 10;
-        }
-
-        .menu-icon { font-size: 20px; color: var(--text-light); padding: 8px; margin-right: 10px; cursor: pointer; }
-
-        .search-container {
-            flex: 1;
-            background: #EFF1F4;
-            height: 40px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            padding: 0 15px;
-        }
-        .search-container input {
-            border: none; background: transparent; outline: none; width: 100%; font-family: inherit; font-size: 16px; margin-left: 8px;
-        }
-
-        .profile-avatar {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: var(--primary);
-            color: white;
-            display: flex; justify-content: center; align-items: center;
-            font-weight: 700;
-            margin-left: 12px;
-            font-size: 16px;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* --- 2. SIDEBAR (Drawer) --- */
-        .drawer-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 49;
-            opacity: 0; pointer-events: none; transition: 0.3s;
-        }
-        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-
-        .drawer {
-            position: fixed; top: 0; bottom: 0; left: 0;
-            width: 280px; background: #fff; z-index: 50;
-            transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
-            display: flex; flex-direction: column; padding: 20px;
-        }
-        .drawer.open { transform: translateX(0); }
-
-        .drawer-header { font-size: 22px; font-weight: 700; color: var(--primary); margin-bottom: 30px; display: flex; gap: 10px; align-items: center; }
-        .nav-link { padding: 14px; font-weight: 500; color: var(--text-main); display: flex; gap: 15px; align-items: center; border-radius: 12px; margin-bottom: 5px; }
-        .nav-link.active { background: #D3E3FD; color: #001d35; font-weight: 600; }
-        .user-info-bottom { margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border); }
-
-        /* --- 3. NOTES GRID --- */
-        .notes-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            display: grid;
-            grid-template-columns: 1fr; /* Single column for mobile */
-            gap: 12px;
-            padding-bottom: 80px; /* Space for FAB */
-        }
+        /* --- SIDEBAR --- */
+        .sidebar { width: 260px; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 10px; flex-shrink: 0; }
+        .brand { font-size: 20px; font-weight: bold; margin-bottom: 30px; padding-left: 15px; display: flex; align-items: center; gap: 10px; }
+        .brand i { color: var(--accent); }
         
-        .note-card {
-            background: var(--bg-card);
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid var(--border);
-            min-height: 100px;
-            display: flex; flex-direction: column;
-            position: relative;
-            transition: 0.2s;
-        }
-        .note-card:active { transform: scale(0.98); background: #f9f9f9; }
+        .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 20px; color: var(--text-mute); border-radius: 0 25px 25px 0; cursor: pointer; transition: 0.2s; font-weight: 500; font-size: 14px; }
+        .nav-item:hover { background: var(--hover); color: var(--text); }
+        .nav-item.active { background: rgba(251, 188, 4, 0.2); color: var(--accent); }
+        .nav-item i { width: 20px; text-align: center; }
+
+        .tools-section { margin-top: auto; border-top: 1px solid var(--border); padding-top: 15px; }
+        .tool-header { font-size: 11px; text-transform: uppercase; color: var(--text-mute); padding-left: 20px; margin-bottom: 10px; font-weight: bold; }
+
+        /* --- MAIN AREA --- */
+        .main { flex-grow: 1; display: flex; flex-direction: column; position: relative; }
         
-        .note-title { font-weight: 600; font-size: 16px; margin-bottom: 6px; }
-        .note-preview { font-size: 14px; color: var(--text-light); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
-        .shared-badge { position: absolute; top: 12px; right: 12px; background: #E6F4EA; color: #137333; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
-
-        /* FAB */
-        .fab {
-            position: fixed; bottom: 20px; right: 20px;
-            width: 56px; height: 56px;
-            background: var(--bg-card); color: var(--primary);
-            border-radius: 16px;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 24px;
-            box-shadow: var(--fab-shadow);
-            z-index: 20;
-            border: 1px solid #D3E3FD;
-        }
-
-        /* --- 4. EDITOR MODAL --- */
-        .editor-screen {
-            position: fixed; inset: 0; background: #fff; z-index: 100;
-            display: none; flex-direction: column;
-            animation: slideUp 0.25s cubic-bezier(0.2, 0, 0, 1);
-        }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        .editor-top {
-            height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px;
-            border-bottom: 1px solid #f0f0f0;
-        }
+        /* Top Bar */
+        .top-bar { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        .search-box { background: var(--surface); border-radius: 8px; padding: 8px 15px; width: 400px; display: flex; align-items: center; gap: 10px; color: var(--text-mute); transition: 0.2s; }
+        .search-box:focus-within { background: #fff; color: #000; box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+        .search-input { background: transparent; border: none; outline: none; color: inherit; width: 100%; font-size: 15px; }
         
-        .editor-content { flex: 1; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+        /* Content Area */
+        .content-area { flex-grow: 1; overflow-y: auto; padding: 30px; }
         
-        .inp-title { font-size: 22px; font-weight: 700; border: none; outline: none; width: 100%; margin-bottom: 15px; font-family: inherit; }
-        .inp-body { font-size: 16px; line-height: 1.6; border: none; outline: none; flex: 1; resize: none; font-family: inherit; color: #333; }
+        /* Create Bar (Only in My Notes) */
+        .create-bar { display: flex; justify-content: center; margin-bottom: 30px; }
+        .create-box { background: var(--surface); width: 600px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border: 1px solid var(--border); padding: 10px; position: relative; }
+        .create-input { background: transparent; border: none; width: 100%; color: #fff; outline: none; display: none; margin-bottom: 10px; font-weight: bold; font-size: 16px; }
+        .create-textarea { background: transparent; border: none; width: 100%; color: var(--text-mute); outline: none; resize: none; font-family: inherit; font-size: 14px; }
+        .create-btns { display: none; justify-content: flex-end; gap: 10px; margin-top: 10px; }
 
-        /* Typing Indicator */
-        .typing-pill {
-            position: absolute; bottom: 80px; left: 20px;
-            background: var(--text-main); color: #fff;
-            padding: 6px 12px; border-radius: 20px; font-size: 12px;
-            opacity: 0; transform: translateY(10px); transition: 0.3s; pointer-events: none;
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 15px; }
+        .card { 
+            background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 15px; 
+            display: flex; flex-direction: column; height: 160px; position: relative; transition: 0.2s; cursor: pointer;
         }
-        .typing-pill.active { opacity: 1; transform: translateY(0); }
-
-        /* --- 5. CONTEXT MENU (Mobile Popup) --- */
-        .context-menu {
-            position: absolute;
-            background: var(--menu-bg);
-            border-radius: 50px;
-            height: 44px;
-            display: none; /* Flex when active */
-            align-items: center;
-            padding: 0 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 200;
-            transform: translateX(-50%);
-            white-space: nowrap;
-        }
-        /* Triangle */
-        .context-menu::after {
-            content: ''; position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%);
-            border-width: 6px 6px 0; border-style: solid; border-color: var(--menu-bg) transparent transparent transparent;
-        }
-
-        .ctx-btn {
-            background: none; border: none; color: white;
-            font-size: 13px; font-weight: 600; padding: 0 12px; height: 100%;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .ctx-divider { width: 1px; height: 16px; background: rgba(255,255,255,0.2); }
-
-        /* --- 6. BOTTOM SHEET (Results) --- */
-        .sheet-container {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: #fff; border-radius: 24px 24px 0 0;
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.15);
-            transform: translateY(110%); transition: transform 0.3s cubic-bezier(0.2, 0, 0, 1);
-            z-index: 300; max-height: 60vh; display: flex; flex-direction: column;
-        }
-        .sheet-container.open { transform: translateY(0); }
-
-        .sheet-handle { width: 40px; height: 5px; background: #E0E2E0; border-radius: 10px; margin: 12px auto; }
-        .sheet-content { padding: 0 24px 30px 24px; overflow-y: auto; }
+        .card:hover { border-color: var(--text-mute); box-shadow: 0 4px 8px rgba(0,0,0,0.3); transform: translateY(-2px); }
+        .card-title { font-weight: bold; margin-bottom: 8px; font-size: 15px; }
+        .card-body { font-size: 13px; color: var(--text-mute); flex-grow: 1; overflow: hidden; white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; }
         
-        /* Utils */
+        .card-actions { 
+            display: flex; justify-content: flex-end; gap: 5px; margin-top: 10px; opacity: 0; transition: 0.2s;
+        }
+        .card:hover .card-actions { opacity: 1; }
+        .btn-icon { background: transparent; border: none; color: var(--text-mute); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-icon:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .btn-icon.del:hover { color: var(--red); background: rgba(242, 139, 130, 0.1); }
+
+        /* --- MODALS --- */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal-box { background: var(--bg); width: 80%; height: 85%; border-radius: 10px; border: 1px solid var(--border); display: flex; flex-direction: column; position: relative; }
+        
+        /* Editor */
+        .editor-top { border-bottom: 1px solid var(--border); padding: 15px; display: flex; justify-content: space-between; align-items: center; background: var(--surface); border-radius: 10px 10px 0 0; }
+        .ribbon { display: flex; flex-direction: row-reverse; }
+        .face { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--surface); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: bold; margin-left: -8px; }
+        
+        .editor-main { flex-grow: 1; padding: 40px; display: flex; flex-direction: column; background: var(--bg); }
+        .editor-h1 { background: transparent; border: none; font-size: 28px; font-weight: bold; color: #fff; margin-bottom: 20px; outline: none; }
+        .editor-p { background: transparent; border: none; font-size: 16px; line-height: 1.6; color: var(--text); outline: none; resize: none; flex-grow: 1; font-family: inherit; }
+
+        /* Tools Modal */
+        .tool-frame { width: 100%; height: 100%; border: none; background: #fff; }
+        .tool-title { font-weight: bold; color: var(--accent); }
+
         .hidden { display: none !important; }
-
+        .restore-btn { color: var(--blue); }
     </style>
 </head>
 <body>
 
-    <!-- DRAWER -->
-    <div class="drawer-overlay" onclick="toggleDrawer()"></div>
-    <div class="drawer" id="drawer">
-        <div class="drawer-header"><i class="fa-solid fa-fire"></i> Ignite</div>
-        <div class="nav-link active"><i class="fa-regular fa-lightbulb"></i> Notes</div>
-        <div class="nav-link"><i class="fa-solid fa-users"></i> Shared</div>
-        <div class="nav-link"><i class="fa-regular fa-trash-can"></i> Trash</div>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="brand"><i class="fa-solid fa-layer-group"></i> Ignite OS</div>
         
-        <div class="user-info-bottom">
-            <div style="font-weight:700;" id="dName">User</div>
-            <div style="font-size:13px; color:#666;" id="dEmail">...</div>
-            <button onclick="logout()" style="margin-top:15px; width:100%; padding:10px; border:1px solid #ccc; background:none; border-radius:10px; font-weight:600;">Sign Out</button>
+        <div class="nav-item active" onclick="switchView('notes')" id="nav-notes">
+            <i class="fa-regular fa-lightbulb"></i> My Notes
         </div>
-    </div>
-
-    <!-- MAIN SCREEN -->
-    <div class="app-bar">
-        <i class="fa-solid fa-bars menu-icon" onclick="toggleDrawer()"></i>
-        <div class="search-container">
-            <i class="fa-solid fa-search" style="color:#888"></i>
-            <input type="text" placeholder="Search" onkeyup="filterNotes(this.value)">
+        <div class="nav-item" onclick="switchView('shared')" id="nav-shared">
+            <i class="fa-solid fa-user-group"></i> Shared with Me
         </div>
-        <div class="profile-avatar" id="topAvatar">U</div>
-    </div>
+        <div class="nav-item" onclick="switchView('trash')" id="nav-trash">
+            <i class="fa-regular fa-trash-can"></i> Trash
+        </div>
 
-    <div class="notes-container" id="notesGrid">
-        <!-- Notes here -->
-    </div>
-
-    <div class="fab" onclick="createNote()"><i class="fa-solid fa-plus"></i></div>
-
-    <!-- EDITOR -->
-    <div class="editor-screen" id="editor">
-        <div class="editor-top">
-            <button onclick="closeEditor()" style="background:none; border:none; font-size:22px; color:#444;"><i class="fa-solid fa-arrow-left"></i></button>
-            <div style="display:flex; gap:15px;">
-                <button onclick="shareNote()" style="background:none; border:none; font-size:18px; color:var(--primary);"><i class="fa-solid fa-user-plus"></i></button>
-                <button onclick="deleteNote()" style="background:none; border:none; font-size:18px; color:#D93025;"><i class="fa-regular fa-trash-can"></i></button>
+        <div class="tools-section">
+            <div class="tool-header">Quick Tools</div>
+            <div class="nav-item" onclick="openTool('Wikipedia')">
+                <i class="fa-brands fa-wikipedia-w"></i> Wikipedia
+            </div>
+            <div class="nav-item" onclick="openTool('Translator')">
+                <i class="fa-solid fa-language"></i> Translator
             </div>
         </div>
-        
-        <div class="editor-content">
-            <input id="eTitle" class="inp-title" placeholder="Title">
-            <textarea id="eContent" class="inp-body" placeholder="Start typing... Select text for AI."></textarea>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main">
+        <div class="top-bar">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" class="search-input" id="searchInp" placeholder="Search..." onkeyup="filterNotes()">
+            </div>
+            <div style="display:flex; gap:15px; align-items:center;">
+                <span id="userId" style="font-size:12px; color:gray;"></span>
+                <button onclick="logout()" style="background:none; border:1px solid #555; color:#fff; padding:5px 15px; cursor:pointer; border-radius:4px;">Log Out</button>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <!-- Create Box (Only visible in 'notes' view) -->
+            <div class="create-bar" id="createBar">
+                <div class="create-box" id="createBox">
+                    <input type="text" class="create-input" id="newTitle" placeholder="Title">
+                    <textarea class="create-textarea" id="newContent" rows="1" placeholder="Take a note..."></textarea>
+                    <div class="create-btns" id="createBtns">
+                        <button class="btn-icon" onclick="resetCreate()"><i class="fa-solid fa-xmark"></i></button>
+                        <button style="background:var(--accent); border:none; padding:6px 15px; border-radius:4px; font-weight:bold; cursor:pointer;" onclick="createNote()">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <h2 id="viewTitle" style="margin-bottom:20px; font-size:18px; color:var(--text-mute);">My Notes</h2>
+            <div class="grid" id="grid"></div>
+        </div>
+    </div>
+
+    <!-- EDITOR MODAL -->
+    <div class="modal" id="editorModal">
+        <div class="modal-box">
+            <div class="editor-top">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="btn-icon" onclick="closeEditor()"><i class="fa-solid fa-arrow-left"></i></button>
+                    <span id="saveStatus" style="font-size:12px; color:gray;">Saved</span>
+                </div>
+                <div style="display:flex; gap:15px; align-items:center;">
+                    <div class="ribbon" id="collabRibbon"></div>
+                    <button class="btn-icon" title="Share" onclick="toggleShareUI()"><i class="fa-solid fa-user-plus"></i></button>
+                    <!-- Tools inside Editor -->
+                    <button class="btn-icon" title="Wiki" onclick="openTool('Wikipedia')"><i class="fa-brands fa-wikipedia-w"></i></button>
+                </div>
+            </div>
             
-            <!-- CONTEXT MENU (Popups up on selection) -->
-            <div class="context-menu" id="ctxMenu">
-                <button class="ctx-btn" onmousedown="runAI(event, 'wiki')">Wiki</button>
-                <div class="ctx-divider"></div>
-                <button class="ctx-btn" onmousedown="runAI(event, 'trans')">Trans</button>
-                <div class="ctx-divider"></div>
-                <button class="ctx-btn" onmousedown="runAI(event, 'speak')"><i class="fa-solid fa-volume-high"></i></button>
+            <!-- Share Dropdown (Absolute) -->
+            <div id="shareUI" style="display:none; position:absolute; top:60px; right:20px; background:#333; padding:15px; border:1px solid #555; border-radius:8px; width:250px;">
+                <input id="shareEmail" placeholder="ID (user@ignite.com)" style="width:100%; padding:8px; margin-bottom:8px; background:#222; border:none; color:#fff;">
+                <button onclick="shareNote()" style="width:100%; background:var(--accent); border:none; padding:5px; font-weight:bold; cursor:pointer;">Add</button>
+            </div>
+
+            <div class="editor-main">
+                <input id="editTitle" class="editor-h1" placeholder="Title">
+                <textarea id="editContent" class="editor-p" placeholder="Start typing..."></textarea>
             </div>
         </div>
-
-        <div class="typing-pill" id="typingBadge">Someone is typing...</div>
     </div>
 
-    <!-- BOTTOM SHEET (AI Results) -->
-    <div class="sheet-container" id="sheet">
-        <div class="sheet-handle" onclick="closeSheet()"></div>
-        <div class="sheet-content" id="sheetBody">
-            <!-- Results -->
+    <!-- TOOL MODAL -->
+    <div class="modal" id="toolModal">
+        <div class="modal-box" style="background:#fff; width:70%; height:80%;">
+            <div style="padding:10px; border-bottom:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; background:#f1f3f4;">
+                <span class="tool-title" id="toolName">Tool</span>
+                <button onclick="document.getElementById('toolModal').style.display='none'" style="border:none; background:none; font-size:18px; cursor:pointer;">✕</button>
+            </div>
+            <iframe id="toolFrame" class="tool-frame" src=""></iframe>
         </div>
     </div>
 
     <script>
-        // --- FIREBASE INIT ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
-            authDomain: "xperts-metadata.firebaseapp.com",
-            projectId: "xperts-metadata",
-            storageBucket: "xperts-metadata.firebasestorage.app",
-            messagingSenderId: "514845910910",
-            appId: "1:514845910910:web:5a2402130a97b5d749b52f",
-            measurementId: "G-CQ5KWGJSZB"
-        };
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // --- SESSION LOGIC (Using your existing login) ---
+        // --- STATE ---
         let user = null;
-        let currentNoteId = null;
-        let editorUnsub = null;
+        let notesData = []; // Store locally for sorting/searching
+        let currentView = 'notes'; // notes, shared, trash
+        let myColor = '#' + Math.floor(Math.random()*16777215).toString(16);
 
-        function checkSession() {
-            const sessionData = localStorage.getItem('xperts_multi_session');
+        // --- INIT ---
+        function init() {
+            const s = localStorage.getItem('xperts_multi_session');
+            if(!s) { window.location.href="index.html"; return; }
+            user = JSON.parse(s)[0];
+            document.getElementById('userId').innerText = user.igniteId || user.name;
+            setupListeners();
+        }
+
+        function logout() { localStorage.removeItem('xperts_multi_session'); window.location.href="index.html"; }
+
+        // --- VIEW SWITCHING ---
+        function switchView(view) {
+            currentView = view;
             
-            if (!sessionData) {
-                // Not logged in -> Go to your login page
-                window.location.href = "index.html"; 
-                return;
-            }
+            // UI Updates
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${view}`).classList.add('active');
             
-            // Parse session
-            const sessions = JSON.parse(sessionData);
-            if (sessions.length === 0) {
-                window.location.href = "index.html";
-                return;
+            const titles = { notes: 'My Notes', shared: 'Shared with Me', trash: 'Trash' };
+            document.getElementById('viewTitle').innerText = titles[view];
+            
+            // Hide/Show Create Bar
+            document.getElementById('createBar').style.display = (view === 'notes') ? 'flex' : 'none';
+
+            // Refresh Data
+            setupListeners();
+        }
+
+        // --- DATA FETCHING & SORTING (FIXED SORTING) ---
+        let unsubscribe = null;
+
+        function setupListeners() {
+            if(unsubscribe) unsubscribe(); // Kill old listener
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '<div style="color:gray">Loading...</div>';
+            notesData = [];
+
+            let q;
+            
+            if(currentView === 'notes') {
+                // My notes, not in trash
+                q = db.collection('notes')
+                    .where('ownerId', '==', user.uid)
+                    .where('isTrashed', '==', false);
+            } else if (currentView === 'shared') {
+                // Shared, not trash
+                if(!user.igniteId) { grid.innerHTML = "No Ignite ID"; return; }
+                q = db.collection('notes')
+                    .where('sharedWith', 'array-contains', user.igniteId)
+                    .where('isTrashed', '==', false); // Assuming shared docs respect owner trash state
+            } else if (currentView === 'trash') {
+                // My notes, IN trash
+                q = db.collection('notes')
+                    .where('ownerId', '==', user.uid)
+                    .where('isTrashed', '==', true);
             }
 
-            user = sessions[0]; // Use first logged in user
-            updateUI();
-            loadNotes();
-        }
+            unsubscribe = q.onSnapshot(snap => {
+                // We map all docs to an array, then SORT client-side for "Newest First"
+                // This avoids needing complex Composite Indexes in Firestore console for every user
+                const tempNotes = [];
+                snap.forEach(doc => {
+                    tempNotes.push({ id: doc.id, ...doc.data() });
+                });
 
-        function updateUI() {
-            document.getElementById('topAvatar').innerText = user.name.charAt(0).toUpperCase();
-            document.getElementById('dName').innerText = user.name;
-            document.getElementById('dEmail').innerText = user.igniteId || user.email;
-        }
+                // SORTING LOGIC: Newest timestamp first
+                tempNotes.sort((a, b) => {
+                    const tA = a.createdAt ? a.createdAt.seconds : 0;
+                    const tB = b.createdAt ? b.createdAt.seconds : 0;
+                    return tB - tA; // Descending
+                });
 
-        function logout() {
-            localStorage.removeItem('xperts_multi_session');
-            window.location.href = "index.html";
-        }
-
-        function toggleDrawer() {
-            document.getElementById('drawer').classList.toggle('open');
-            document.querySelector('.drawer-overlay').classList.toggle('open');
-        }
-
-        // --- NOTES LOGIC ---
-        async function createNote() {
-            const doc = await db.collection('notes').add({
-                title:"", content:"", 
-                ownerId: user.uid,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                notesData = tempNotes;
+                renderGrid();
             });
-            openEditor(doc.id);
         }
 
-        function loadNotes() {
-            // My Notes
-            db.collection('notes').where('ownerId', '==', user.uid).orderBy('createdAt', 'desc')
-            .onSnapshot(snap => renderList(snap));
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
             
-            // Shared Notes (If Ignite ID exists)
-            if(user.igniteId) {
-                db.collection('notes').where('sharedWith', 'array-contains', user.igniteId)
-                .onSnapshot(snap => renderList(snap, true));
+            const term = document.getElementById('searchInp').value.toLowerCase();
+            const filtered = notesData.filter(n => (n.title||'').toLowerCase().includes(term) || (n.content||'').toLowerCase().includes(term));
+
+            if(filtered.length === 0) {
+                grid.innerHTML = '<div style="margin:20px; color:gray">No notes found.</div>';
+                return;
             }
-        }
 
-        function renderList(snap, isShared = false) {
-            const grid = document.getElementById('notesGrid');
-            // Clear only if needed, but for simplicity in real-time we might clear or diff.
-            // Simple approach: Clear on first load or simple append logic?
-            // To allow mixing streams properly without dupes, we'd use a Map.
-            // For this mobile demo, let's clear and re-render current snapshot (simple).
-            if(!isShared) grid.innerHTML = ''; 
-
-            snap.forEach(doc => {
-                const d = doc.data();
-                // Check dupes
-                if(document.getElementById(`card-${doc.id}`)) return;
-
+            filtered.forEach(note => {
                 const el = document.createElement('div');
-                el.className = 'note-card';
-                el.id = `card-${doc.id}`;
-                el.onclick = () => openEditor(doc.id);
+                el.className = 'card';
+                el.onclick = (e) => {
+                    if(!e.target.closest('button')) {
+                        if(currentView === 'trash') alert("Restore note to edit.");
+                        else openEditor(note.id);
+                    }
+                };
+
+                let buttons = '';
+                if(currentView === 'trash') {
+                    // Trash View Buttons
+                    buttons = `
+                        <button class="btn-icon restore-btn" onclick="restoreNote('${note.id}')" title="Restore"><i class="fa-solid fa-trash-arrow-up"></i></button>
+                        <button class="btn-icon del" onclick="deleteForever('${note.id}')" title="Delete Forever"><i class="fa-solid fa-ban"></i></button>
+                    `;
+                } else {
+                    // Standard View Buttons
+                    const isOwner = note.ownerId === user.uid;
+                    buttons = `
+                         <button class="btn-icon" onclick="copyNote('${note.id}', '${note.title}')" title="Clone"><i class="fa-regular fa-clone"></i></button>
+                         ${isOwner ? `<button class="btn-icon del" onclick="moveToTrash('${note.id}')" title="Move to Trash"><i class="fa-solid fa-trash"></i></button>` : ''}
+                    `;
+                }
+
                 el.innerHTML = `
-                    ${isShared ? '<div class="shared-badge">Shared</div>' : ''}
-                    <div class="note-title">${d.title || '(Untitled)'}</div>
-                    <div class="note-preview">${d.content || 'Empty note'}</div>
+                    <div class="card-title">${note.title || '(Untitled)'}</div>
+                    <div class="card-body">${note.content || ''}</div>
+                    <div class="card-actions">${buttons}</div>
                 `;
                 grid.appendChild(el);
             });
         }
 
-        function filterNotes(term) {
-            term = term.toLowerCase();
-            document.querySelectorAll('.note-card').forEach(c => {
-                c.style.display = c.innerText.toLowerCase().includes(term) ? 'flex' : 'none';
-            });
+        function filterNotes() { renderGrid(); }
+
+        // --- TRASH LOGIC ---
+        async function moveToTrash(id) {
+            if(confirm("Move to Trash?")) {
+                await db.collection('notes').doc(id).update({ isTrashed: true });
+            }
+        }
+        async function restoreNote(id) {
+            await db.collection('notes').doc(id).update({ isTrashed: false });
+        }
+        async function deleteForever(id) {
+            if(confirm("Permanently delete? This cannot be undone.")) {
+                await db.collection('notes').doc(id).delete();
+            }
         }
 
-        // --- EDITOR LOGIC ---
-        function openEditor(id) {
-            currentNoteId = id;
-            document.getElementById('editor').style.display = 'flex';
+        // --- CREATE NOTE ---
+        const cBox = document.getElementById('createBox');
+        const cTitle = document.getElementById('newTitle');
+        const cContent = document.getElementById('newContent');
+        const cBtns = document.getElementById('createBtns');
+
+        cContent.addEventListener('focus', () => {
+            cTitle.style.display = 'block';
+            cBtns.style.display = 'flex';
+            cContent.rows = 4;
+        });
+
+        function resetCreate() {
+            cTitle.style.display = 'none';
+            cBtns.style.display = 'none';
+            cContent.rows = 1;
+            cTitle.value = ''; cContent.value = '';
+        }
+
+        async function createNote() {
+            const t = cTitle.value;
+            const c = cContent.value;
+            if(!t && !c) return;
             
-            editorUnsub = db.collection('notes').doc(id).onSnapshot(doc => {
+            await db.collection('notes').add({
+                title: t, content: c,
+                ownerId: user.uid,
+                isTrashed: false,
+                sharedWith: [],
+                viewers: [],
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            resetCreate();
+        }
+
+        // --- EDITOR & REALTIME ---
+        let curId = null;
+        let editUnsub = null;
+        const eTitle = document.getElementById('editTitle');
+        const eContent = document.getElementById('editContent');
+
+        async function openEditor(id) {
+            curId = id;
+            document.getElementById('editorModal').style.display = 'flex';
+            
+            // Add Presence
+            db.collection('notes').doc(id).update({
+                viewers: firebase.firestore.FieldValue.arrayUnion({ name: user.name, color: myColor, id: user.uid })
+            });
+
+            editUnsub = db.collection('notes').doc(id).onSnapshot(doc => {
                 if(!doc.exists) { closeEditor(); return; }
                 const d = doc.data();
-                if(document.activeElement.id !== 'eTitle') document.getElementById('eTitle').value = d.title;
-                if(document.activeElement.id !== 'eContent') document.getElementById('eContent').value = d.content;
+                
+                // Sync text if not focused
+                if(document.activeElement !== eTitle) eTitle.value = d.title;
+                if(document.activeElement !== eContent) eContent.value = d.content;
 
-                // Typing Indicator
-                const badge = document.getElementById('typingBadge');
-                if(d.typing && d.typing.id !== user.uid) {
-                    badge.innerText = `${d.typing.name} is typing...`;
-                    badge.classList.add('active');
-                } else {
-                    badge.classList.remove('active');
-                }
-            });
-        }
-
-        function closeEditor() {
-            document.getElementById('editor').style.display = 'none';
-            if(editorUnsub) editorUnsub();
-            currentNoteId = null;
-            document.getElementById('ctxMenu').style.display = 'none';
-        }
-
-        // Auto Save & Typing Presence
-        let saveT;
-        const handleInput = () => {
-            // Set Typing
-            db.collection('notes').doc(currentNoteId).update({
-                typing: { id: user.uid, name: user.name, ts: Date.now() }
-            });
-
-            clearTimeout(saveT);
-            saveT = setTimeout(() => {
-                db.collection('notes').doc(currentNoteId).update({
-                    title: document.getElementById('eTitle').value,
-                    content: document.getElementById('eContent').value,
-                    typing: null
+                // Sync Ribbon
+                const rib = document.getElementById('collabRibbon');
+                rib.innerHTML = '';
+                (d.viewers||[]).forEach(v => {
+                    const d = document.createElement('div');
+                    d.className = 'face';
+                    d.style.backgroundColor = v.color;
+                    d.innerText = v.name.charAt(0);
+                    d.title = v.name;
+                    rib.appendChild(d);
                 });
-            }, 500);
+            });
         }
-        document.getElementById('eTitle').addEventListener('input', handleInput);
-        document.getElementById('eContent').addEventListener('input', handleInput);
 
-        async function deleteNote() {
-            if(confirm("Delete?")) {
-                await db.collection('notes').doc(currentNoteId).delete();
-                closeEditor();
+        // Auto Save (Input Handler)
+        const handleInput = () => {
+             document.getElementById('saveStatus').innerText = 'Saving...';
+             setTimeout(() => {
+                 if(curId) {
+                     db.collection('notes').doc(curId).update({
+                         title: eTitle.value, content: eContent.value
+                     }).then(() => document.getElementById('saveStatus').innerText = 'Saved');
+                 }
+             }, 500);
+        };
+        eTitle.addEventListener('input', handleInput);
+        eContent.addEventListener('input', handleInput);
+
+        async function closeEditor() {
+            if(curId) {
+                // Remove Presence
+                const ref = db.collection('notes').doc(curId);
+                const snap = await ref.get();
+                if(snap.exists) {
+                    const viewers = snap.data().viewers || [];
+                    const updated = viewers.filter(v => v.id !== user.uid);
+                    await ref.update({ viewers: updated });
+                }
             }
+            document.getElementById('editorModal').style.display = 'none';
+            if(editUnsub) editUnsub();
+            curId = null;
+        }
+
+        // --- TOOLS & SHARING ---
+        function openTool(name) {
+            const map = {
+                'Wikipedia': 'https://en.m.wikipedia.org/wiki/Special:Search',
+                'Translator': 'https://www.bing.com/translator' // Google translate often blocks framing, Bing is friendlier or use generic
+            };
+            document.getElementById('toolName').innerText = name;
+            document.getElementById('toolFrame').src = map[name];
+            document.getElementById('toolModal').style.display = 'flex';
+        }
+
+        function toggleShareUI() {
+            const ui = document.getElementById('shareUI');
+            ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
         }
 
         async function shareNote() {
-            const email = prompt("Share with Ignite ID:");
-            if(email && email.endsWith('@ignite.com')) {
-                await db.collection('notes').doc(currentNoteId).update({
+            const email = document.getElementById('shareEmail').value;
+            if(curId && email.includes('@ignite.com')) {
+                await db.collection('notes').doc(curId).update({
                     sharedWith: firebase.firestore.FieldValue.arrayUnion(email)
                 });
-                alert("Shared!");
+                alert('Shared');
+                toggleShareUI();
+            } else { alert('Invalid ID'); }
+        }
+        
+        async function copyNote(id, title) {
+            const old = notesData.find(n => n.id === id);
+            if(old) {
+                await db.collection('notes').add({
+                    title: "Copy - " + old.title, content: old.content,
+                    ownerId: user.uid, isTrashed: false, sharedWith: [], createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
             }
         }
 
-
-        // --- CONTEXT MENU (SELECTION) LOGIC ---
-        const txtArea = document.getElementById('eContent');
-        const menu = document.getElementById('ctxMenu');
-
-        document.addEventListener('selectionchange', () => {
-            const sel = window.getSelection();
-            const text = sel.toString().trim();
-
-            if (text.length > 0 && document.activeElement === txtArea) {
-                try {
-                    const range = sel.getRangeAt(0);
-                    const rect = range.getBoundingClientRect();
-                    
-                    // Calculation for mobile coordinates
-                    const top = rect.top - 55; // Above text
-                    const left = rect.left + (rect.width / 2);
-                    
-                    menu.style.top = `${top > 10 ? top : rect.bottom + 10}px`; // Flip if too high
-                    menu.style.left = `${left}px`;
-                    menu.style.display = 'flex';
-                } catch(e) { menu.style.display = 'none'; }
-            } else {
-                menu.style.display = 'none';
-            }
-        });
-
-        txtArea.addEventListener('scroll', () => menu.style.display = 'none');
-        txtArea.addEventListener('blur', () => setTimeout(()=>menu.style.display='none', 200));
-
-        // --- AI RESULTS ---
-        function closeSheet() { document.getElementById('sheet').classList.remove('open'); }
-
-        async function runAI(e, type) {
-            e.preventDefault(); // Keep selection
-            const text = window.getSelection().toString().trim();
-            if(!text) return;
-
-            const sheet = document.getElementById('sheet');
-            const body = document.getElementById('sheetBody');
-            
-            if(type === 'speak') {
-                window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
-                return;
-            }
-
-            sheet.classList.add('open');
-            body.innerHTML = '<div style="text-align:center; padding:20px; color:#888;"><i class="fa-solid fa-spinner fa-spin"></i> Processing...</div>';
-
-            if(type === 'wiki') {
-                try {
-                    const r = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(text)}`);
-                    const d = await r.json();
-                    if(d.type === 'standard') {
-                        body.innerHTML = `
-                            <h3 style="margin:0 0 10px 0; color:var(--primary)">${d.title}</h3>
-                            ${d.thumbnail ? `<img src="${d.thumbnail.source}" style="width:100%; height:150px; object-fit:cover; border-radius:12px; margin-bottom:10px;">` : ''}
-                            <div style="line-height:1.5">${d.extract}</div>
-                        `;
-                    } else { body.innerText = "No results found."; }
-                } catch(e) { body.innerText = "Error fetching Wiki."; }
-            }
-
-            if(type === 'trans') {
-                try {
-                    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|es`);
-                    const d = await r.json();
-                    body.innerHTML = `
-                        <div style="font-size:12px; color:#888;">Spanish Translation:</div>
-                        <h2 style="margin:10px 0;">${d.responseData.translatedText}</h2>
-                    `;
-                } catch(e) { body.innerText = "Translation Error."; }
-            }
-        }
-
-        // Initialize
-        checkSession();
-
+        init();
     </script>
 </body>
 </html>
