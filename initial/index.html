@@ -8,13 +8,21 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; }
+        body { font-family: sans-serif; display: flex; justify-content: center; color: #0f1419; }
         .container { width: 100%; max-width: 450px; padding: 30px; }
         .logo { font-size: 40px; text-align: center; margin-bottom: 30px; font-weight: bold; }
-        .input-group input { width: 100%; padding: 15px; border: 1px solid #cfd9de; border-radius: 5px; margin-bottom: 20px; font-size: 16px; }
+        .input-group input { width: 100%; padding: 15px; border: 1px solid #cfd9de; border-radius: 5px; margin-bottom: 20px; font-size: 16px; outline: none; }
+        .input-group input:focus { border-color: #1d9bf0; }
         .btn-black { width: 100%; padding: 15px; background: #000; color: #fff; border: none; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; }
         .hidden { display: none; }
         .divider { text-align: center; margin: 20px 0; color: #536471; }
+        
+        /* Account Selection List Styles */
+        .account-list-item { display: flex; align-items: center; padding: 12px; border: 1px solid #cfd9de; border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
+        .account-list-item:hover { background-color: #f7f9f9; border-color: #1d9bf0; }
+        .al-avatar { width: 40px; height: 40px; border-radius: 50%; background: #000; color: #fff; display: flex; justify-content: center; align-items: center; font-weight: bold; margin-right: 15px; }
+        .al-name { font-weight: bold; font-size: 15px; }
+        .al-ignite { font-size: 13px; color: #536471; }
     </style>
 </head>
 <body>
@@ -22,12 +30,20 @@
 <div class="container">
     <div class="logo">𝕏</div>
 
-    <!-- Step 1: ID -->
+    <!-- Step 1: ID Input -->
     <div id="s1">
         <h1 style="margin-bottom:30px;">Sign in to Xperts</h1>
         <div class="input-group"><input type="text" id="idInput" placeholder="Phone, email, or ignite ID"></div>
         <button class="btn-black" onclick="findUser()">Next</button>
         <p class="divider"><a href="2.html" style="color:#1d9bf0; text-decoration:none;">Create account</a></p>
+    </div>
+
+    <!-- Step 1.5: Account Selection (For duplicate mobile numbers) -->
+    <div id="selection-screen" class="hidden">
+        <h2 style="margin-bottom:20px;">Choose an account</h2>
+        <p style="color:#536471; font-size:14px; margin-bottom:20px;">This number is associated with multiple accounts.</p>
+        <div id="accountListContainer"></div>
+        <button class="btn-black" style="background:transparent; color:black; border:1px solid #cfd9de; margin-top:10px;" onclick="location.reload()">Back</button>
     </div>
 
     <!-- Step 2: Pass/OTP -->
@@ -45,32 +61,28 @@
     const db = firebase.firestore();
     emailjs.init("Yr9MutUoHOEONnFgn");
 
-    // 1. Check Existing Session
+    // 1.html Logic: If ANY user is logged in, redirect.
     const sessions = JSON.parse(localStorage.getItem('xperts_multi_session') || "[]");
     if(sessions.length > 0) {
         window.location.href = "https://abc.xyz"; 
     }
 
-    let foundUsers = []; // Array to store multiple accounts
-    let loginType = '';
+    let foundUser = null;
     let otpSent = 0;
+    let loginType = '';
 
     async function findUser() {
         const val = document.getElementById('idInput').value.trim();
         if(!val) return;
-        foundUsers = [];
 
         let q;
-        // Determine Query Type
         if(val.includes('@') && !val.includes('ignite')) {
             loginType = 'email';
             q = db.collection('users').where('email','==',val);
-        }
-        else if(val.includes('ignite')) {
+        } else if(val.includes('ignite')) {
             loginType = 'ignite';
             q = db.collection('users').where('igniteId','==', (val.includes('@')?val:val+'@ignite.com'));
-        }
-        else {
+        } else {
             loginType = 'mobile';
             q = db.collection('users').where('mobile','==',val);
         }
@@ -78,27 +90,53 @@
         const snap = await q.get();
         if(snap.empty) { alert("User not found"); return; }
         
-        // Store ALL matching documents
-        snap.forEach(doc => {
-            foundUsers.push({ id: doc.id, ...doc.data() });
-        });
-
-        document.getElementById('s1').classList.add('hidden');
-        document.getElementById('s2').classList.remove('hidden');
-
-        // Logic for Display Name
-        if(foundUsers.length > 1) {
-            document.getElementById('welcomeId').innerText = `Found ${foundUsers.length} accounts`;
-        } else {
-            document.getElementById('welcomeId').innerText = "Hi, " + foundUsers[0].firstName;
+        // ** LOGIC CHANGE: Check for Multiple Accounts **
+        if(snap.size > 1) {
+            showAccountSelection(snap);
+            return;
         }
 
-        // OTP Logic (Only for Email login)
+        // Single account found
+        proceedToLogin(snap.docs[0]);
+    }
+
+    function showAccountSelection(snap) {
+        document.getElementById('s1').classList.add('hidden');
+        document.getElementById('selection-screen').classList.remove('hidden');
+        
+        const list = document.getElementById('accountListContainer');
+        list.innerHTML = '';
+
+        snap.forEach(doc => {
+            const data = doc.data();
+            const div = document.createElement('div');
+            div.className = 'account-list-item';
+            div.onclick = () => proceedToLogin(doc); // Pass specific doc
+            div.innerHTML = `
+                <div class="al-avatar">${data.firstName.charAt(0)}</div>
+                <div class="info">
+                    <div class="al-name">${data.firstName} ${data.lastName}</div>
+                    <div class="al-ignite">${data.igniteId}</div>
+                </div>
+            `;
+            list.appendChild(div);
+        });
+    }
+
+    function proceedToLogin(doc) {
+        foundUser = { id: doc.id, ...doc.data() };
+        
+        document.getElementById('s1').classList.add('hidden');
+        document.getElementById('selection-screen').classList.add('hidden');
+        document.getElementById('s2').classList.remove('hidden');
+        document.getElementById('welcomeId').innerText = "Hi, " + foundUser.firstName;
+
+        // If login via Email ID specifically (not mobile/ignite), use OTP
         if(loginType === 'email') {
             document.getElementById('passInput').classList.add('hidden');
             document.getElementById('otpGroup').classList.remove('hidden');
             otpSent = Math.floor(100000 + Math.random() * 900000);
-            emailjs.send('service_ijwq7ob', 'template_l9yg71m', { otp: otpSent, to_email: val });
+            emailjs.send('service_ijwq7ob', 'template_l9yg71m', { otp: otpSent, to_email: foundUser.email });
             alert("OTP Sent to Email");
         }
     }
@@ -106,35 +144,19 @@
     function doLogin() {
         const pass = document.getElementById('passInput').value;
         const otp = document.getElementById('otpInput').value;
+        let success = false;
 
-        let authorized = false;
-
-        if(loginType === 'email') {
-            // Check OTP
-            if(parseInt(otp) === otpSent) authorized = true;
-            else alert("Wrong OTP");
-        } else {
-            // Check Password
-            // If ANY account connected to this mobile matches the password, authorize ALL
-            const match = foundUsers.find(u => u.password === pass);
-            if(match) authorized = true;
+        if(!document.getElementById('passInput').classList.contains('hidden')) {
+            if(pass === foundUser.password) success = true;
             else alert("Wrong password");
+        } else {
+            if(parseInt(otp) === otpSent) success = true;
+            else alert("Wrong OTP");
         }
 
-        if(authorized) {
-            // Add ALL found users to session
-            let currentSessions = []; // Empty because this is 1.html (fresh login)
-            
-            foundUsers.forEach(user => {
-                currentSessions.push({ 
-                    uid: user.id, 
-                    name: user.firstName, 
-                    igniteId: user.igniteId 
-                });
-            });
-
-            localStorage.setItem('xperts_multi_session', JSON.stringify(currentSessions));
-            localStorage.setItem('xperts_active_index', 0); // Set first as active
+        if(success) {
+            const newSession = { uid: foundUser.id, name: foundUser.firstName, igniteId: foundUser.igniteId };
+            localStorage.setItem('xperts_multi_session', JSON.stringify([newSession]));
             window.location.href = "https://abc.xyz";
         }
     }
