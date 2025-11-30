@@ -2,66 +2,63 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Security Code</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #000; color: white; margin:0; }
-        .container { text-align: center; }
-        .code { font-size: 40px; letter-spacing: 5px; font-weight: bold; margin: 20px 0; color: #1d9bf0; }
-        .btn { padding: 10px 20px; background: white; color: black; border: none; border-radius: 20px; cursor: pointer; }
+        body { font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: #000; color: white; margin: 0; }
+        .code { font-size: 40px; font-weight: bold; letter-spacing: 5px; margin: 20px 0; }
+        .timer { color: #888; }
+        button { padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Security Verification Code</h2>
-    <p>Use this code to verify your identity on another device.</p>
-    <div id="display-code" class="code">Generating...</div>
-    <button class="btn" onclick="generateCode()">Refresh Code</button>
-</div>
+    <h2>Security Code</h2>
+    <p>Use this code to verify your identity on other devices.</p>
+    
+    <div class="code" id="displayCode">Loading...</div>
+    <div class="timer">Refreshes in <span id="timeLeft">300</span>s</div>
+    <br>
+    <button onclick="generateCode()">Refresh Code</button>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
-        authDomain: "xperts-metadata.firebaseapp.com",
-        projectId: "xperts-metadata",
-        storageBucket: "xperts-metadata.firebasestorage.app",
-        messagingSenderId: "514845910910",
-        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
-        measurementId: "G-CQ5KWGJSZB"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Check login
-    const sessions = JSON.parse(localStorage.getItem('x_users_sessions') || '[]');
+    // In a real app, we get the UID from the Auth State or LocalStorage
+    // For this demo, we assume the user is "Logged In" via LocalStorage and we grab the first session
+    const sessions = JSON.parse(localStorage.getItem('x_sessions') || '[]');
     if(sessions.length === 0) {
-        alert("You must be logged in to view this.");
-        window.location.href = "1.html";
+        document.body.innerHTML = "<h1>Please Login First in 1.html</h1>";
+    } else {
+        const currentUser = sessions[0]; // Using primary session
+        
+        generateCode(currentUser.uid);
+        
+        // Timer countdown logic
+        setInterval(() => {
+            let t = parseInt(document.getElementById('timeLeft').innerText);
+            if(t > 0) document.getElementById('timeLeft').innerText = t - 1;
+        }, 1000);
     }
 
-    // Assume active user is the last one logged in or index 0
-    const activeUser = sessions[sessions.length - 1]; 
+    async function generateCode(uid) {
+        if(!uid) uid = sessions[0].uid;
+        
+        // Generate 6 digit code
+        const code = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        document.getElementById('displayCode').innerText = code;
+        document.getElementById('timeLeft').innerText = "300";
 
-    async function generateCode() {
-        const code = Math.floor(100000 + Math.random() * 900000); // 6 digit
-        document.getElementById('display-code').innerText = code;
-
-        try {
-            await db.collection('users').doc(activeUser.email).update({
-                securityCode: code,
-                codeTimestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        } catch(e) {
-            console.error(e);
-            alert("Error generating code");
-        }
+        // Save to Firestore
+        await db.collection('users').doc(uid).update({
+            authCode: code,
+            authCodeTime: Date.now()
+        });
     }
-
-    // Generate on load
-    window.onload = generateCode;
 </script>
 </body>
 </html>

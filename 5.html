@@ -2,98 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reset Password</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; height: 100vh; margin:0; }
-        .container { width: 100%; max-width: 600px; padding: 20px; }
-        h1 { font-size: 24px; margin-bottom: 10px; }
-        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cfd9de; border-radius: 4px; box-sizing:border-box; }
-        .btn { width: 100%; padding: 12px; border-radius: 30px; border: none; background: #000; color: #fff; font-weight: bold; cursor: pointer; }
+        body { font-family: -apple-system, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn { background: black; color: white; padding: 15px; width: 100%; border-radius: 99px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .hidden { display: none; }
-        p { font-size: 14px; color: #536471; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="step-code">
-        <h1>We sent you a code</h1>
-        <p>Check your other logged-in device (Go to Security Code page) to get the code. It expires in 5 minutes.</p>
-        <input type="text" id="code" placeholder="Enter confirmation code">
+    <h1>Reset Password</h1>
+    
+    <div id="step1">
+        <p>Enter the code from your logged-in device (6.html)</p>
+        <input type="text" id="code" placeholder="Enter Code">
         <button class="btn" onclick="verifyCode()">Verify</button>
     </div>
 
-    <div id="step-newpass" class="hidden">
-        <h1>Reset your password</h1>
-        <input type="password" id="newpass" placeholder="New password">
-        <button class="btn" onclick="resetPassword()">Reset Password</button>
+    <div id="step2" class="hidden">
+        <p>Enter New Password</p>
+        <input type="password" id="newPass">
+        <button class="btn" onclick="updatePass()">Change Password</button>
     </div>
-</div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
-        authDomain: "xperts-metadata.firebaseapp.com",
-        projectId: "xperts-metadata",
-        storageBucket: "xperts-metadata.firebasestorage.app",
-        messagingSenderId: "514845910910",
-        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
-        measurementId: "G-CQ5KWGJSZB"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const urlParams = new URLSearchParams(window.location.search);
     const email = urlParams.get('email');
+    let userId = null;
 
-    if(!email) { alert("Invalid Request"); window.location.href="1.html"; }
+    if(!email) { alert("No email provided"); window.location.href="1.html"; }
 
     async function verifyCode() {
-        const codeInput = document.getElementById('code').value;
+        const code = document.getElementById('code').value;
         
         try {
-            const doc = await db.collection('users').doc(email).get();
-            if(!doc.exists) return alert("User not found");
-
-            const data = doc.data();
-            const serverCode = data.securityCode;
-            const timestamp = data.codeTimestamp; // Firestore Timestamp
+            const snap = await db.collection('users').where('email', '==', email).get();
+            if(snap.empty) { alert("User not found"); return; }
             
-            // Time Check (5 mins = 300 seconds)
-            const now = new Date();
-            const codeTime = timestamp.toDate();
-            const diff = (now - codeTime) / 1000;
-
-            if (diff > 300) {
-                alert("Code expired");
-                return;
-            }
-
-            if (serverCode == codeInput) {
-                document.getElementById('step-code').classList.add('hidden');
-                document.getElementById('step-newpass').classList.remove('hidden');
+            const doc = snap.docs[0];
+            const data = doc.data();
+            
+            // Check Code and Time (Valid for 5 mins = 300000ms)
+            const now = Date.now();
+            if (data.authCode === code && (now - data.authCodeTime < 300000)) {
+                userId = doc.id;
+                document.getElementById('step1').classList.add('hidden');
+                document.getElementById('step2').classList.remove('hidden');
             } else {
-                alert("Incorrect code");
+                alert("Invalid or Expired Code");
             }
-        } catch(e) {
-            console.error(e);
-            alert("Error verifying code");
-        }
+        } catch(e) { console.error(e); }
     }
 
-    async function resetPassword() {
-        const newPass = document.getElementById('newpass').value;
-        if(newPass.length < 8) return alert("Password too short");
-
-        await db.collection('users').doc(email).update({
-            password: newPass
-        });
-
-        alert("Password updated! Please login.");
-        window.location.href = "1.html";
+    async function updatePass() {
+        const p = document.getElementById('newPass').value;
+        if(!p) return;
+        await db.collection('users').doc(userId).update({ password: p });
+        alert("Password Updated");
+        window.location.href = "1.html?email="+email;
     }
 </script>
 </body>

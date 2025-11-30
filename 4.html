@@ -3,94 +3,122 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Find your account</title>
+    <title>Find your email</title>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; height: 100vh; background: #fff; margin:0; }
-        .container { width: 100%; max-width: 600px; padding: 20px; }
-        .logo { margin-bottom: 20px; }
-        h1 { font-size: 26px; font-weight: 700; margin-bottom: 10px; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #cfd9de; border-radius: 4px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 15px; border-radius: 30px; border: none; background: #000; color: #fff; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        .result-item { padding: 15px; border: 1px solid #eee; margin-top: 10px; cursor: pointer; border-radius: 8px; }
-        .result-item:hover { background: #f7f9f9; }
+        body { font-family: -apple-system, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn { background: black; color: white; padding: 15px; width: 100%; border-radius: 99px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .hidden { display: none; }
+        .list-item { padding: 15px; border: 1px solid #eee; margin-top: 10px; border-radius: 8px; cursor: pointer; }
+        .list-item:hover { background: #f9f9f9; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="logo">
-        <svg viewBox="0 0 24 24" aria-hidden="true" width="30" height="30"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg>
-    </div>
+    <h1>Find your X email</h1>
     
-    <div id="search-form">
-        <h1>Find your X account</h1>
-        <p style="color: #536471;">Enter the phone number, First Name and Last Name associated with your account.</p>
-        <input type="tel" id="mobile" placeholder="Phone number">
-        <input type="text" id="fname" placeholder="First Name">
-        <input type="text" id="lname" placeholder="Last Name">
-        <button class="btn" onclick="findAccount()">Next</button>
+    <div id="step1">
+        <p>Enter your phone number</p>
+        <input type="tel" id="mobile" placeholder="Phone Number">
+        <button class="btn" onclick="checkMobile()">Next</button>
     </div>
 
-    <div id="results" style="display:none;">
-        <h1>We found these accounts</h1>
-        <div id="email-list"></div>
+    <div id="step2" class="hidden">
+        <p>Enter your Name</p>
+        <input type="text" id="firstName" placeholder="First Name">
+        <input type="text" id="lastName" placeholder="Last Name">
+        <button class="btn" onclick="checkName()">Next</button>
     </div>
-</div>
+
+    <div id="step3" class="hidden">
+        <p>Enter the security code visible on your other logged-in device (6.html)</p>
+        <input type="text" id="securityCode" placeholder="Enter Code">
+        <button class="btn" onclick="verifySecurity()">Verify</button>
+    </div>
+
+    <div id="step4" class="hidden">
+        <p>We found these emails:</p>
+        <div id="emailList"></div>
+    </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
-        authDomain: "xperts-metadata.firebaseapp.com",
-        projectId: "xperts-metadata",
-        storageBucket: "xperts-metadata.firebasestorage.app",
-        messagingSenderId: "514845910910",
-        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
-        measurementId: "G-CQ5KWGJSZB"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const urlParams = new URLSearchParams(window.location.search);
-    window.onload = function() {
-        if(urlParams.get('mobile')) {
-            document.getElementById('mobile').value = urlParams.get('mobile');
+    if(urlParams.get('mobile')) {
+        document.getElementById('mobile').value = urlParams.get('mobile');
+        // Auto move to step 2 if mobile present? Logic choice.
+    }
+
+    let foundUsers = [];
+
+    function checkMobile() {
+        const mob = document.getElementById('mobile').value;
+        if(mob) {
+            document.getElementById('step1').classList.add('hidden');
+            document.getElementById('step2').classList.remove('hidden');
         }
     }
 
-    async function findAccount() {
-        const mobile = document.getElementById('mobile').value;
-        const fname = document.getElementById('fname').value;
-        const lname = document.getElementById('lname').value;
+    async function checkName() {
+        const mob = document.getElementById('mobile').value;
+        const fn = document.getElementById('firstName').value;
+        const ln = document.getElementById('lastName').value;
 
-        if(!mobile || !fname) return alert("Fill details");
+        try {
+            const snap = await db.collection('users')
+                .where('mobile', '==', mob)
+                .where('firstName', '==', fn)
+                .where('lastName', '==', ln)
+                .get();
 
-        const snapshot = await db.collection('users')
-            .where('mobile', '==', mobile)
-            .where('firstName', '==', fname)
-            .where('lastName', '==', lname)
-            .get();
+            if(!snap.empty) {
+                foundUsers = snap.docs.map(d => ({id: d.id, ...d.data()}));
+                document.getElementById('step2').classList.add('hidden');
+                document.getElementById('step3').classList.remove('hidden');
+            } else {
+                alert("No account found with these details.");
+            }
+        } catch(e) { console.error(e); }
+    }
 
-        const list = document.getElementById('email-list');
-        list.innerHTML = "";
+    async function verifySecurity() {
+        const code = document.getElementById('securityCode').value;
         
-        if (snapshot.empty) {
-            alert("No account found");
-        } else {
-            document.getElementById('search-form').style.display = 'none';
-            document.getElementById('results').style.display = 'block';
+        // Check if ANY of the found users matches this code
+        // In real app, we check the specific user. Here we iterate.
+        let match = false;
+        
+        // This simulates checking the code stored by 6.html in Firestore
+        // Note: For this to work, 6.html must have run and saved a code to the DB.
+        for(let user of foundUsers) {
+            // Re-fetch user to get latest code
+            const userDoc = await db.collection('users').doc(user.id).get();
+            const data = userDoc.data();
+            
+            // Basic check: Code matches
+            if(data.authCode === code) {
+                match = true;
+            }
+        }
 
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const div = document.createElement('div');
-                div.className = 'result-item';
-                div.innerText = data.email;
-                div.onclick = () => {
-                    window.location.href = `1.html?email=${data.email}`;
-                };
-                list.appendChild(div);
+        if(match) {
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step4').classList.remove('hidden');
+            const list = document.getElementById('emailList');
+            foundUsers.forEach(u => {
+                const d = document.createElement('div');
+                d.className = 'list-item';
+                d.innerText = u.email;
+                d.onclick = () => window.location.href = `1.html?email=${u.email}`;
+                list.appendChild(d);
             });
+        } else {
+            alert("Invalid Code");
         }
     }
 </script>

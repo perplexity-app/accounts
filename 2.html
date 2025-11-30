@@ -7,178 +7,187 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; height: 100vh; margin:0; }
-        .container { width: 100%; max-width: 600px; padding: 20px; display: flex; flex-direction: column; }
-        .logo { align-self: center; margin-bottom: 20px; }
-        h2 { font-size: 24px; margin-bottom: 20px; }
-        .input-group { margin-bottom: 20px; }
-        input, select { width: 100%; padding: 15px; border: 1px solid #cfd9de; border-radius: 4px; font-size: 16px; margin-top: 5px; box-sizing: border-box; }
-        .btn-next { background: #000; color: #fff; border-radius: 30px; padding: 15px; font-weight: bold; border: none; cursor: pointer; width: 100%; margin-top: auto; }
-        .step { display: none; flex-direction: column; height: 100%; }
-        .step.active { display: flex; }
-        .dob-container { display: flex; gap: 10px; }
-        .error { color: red; font-size: 12px; }
+        :root { --primary: #000; --gray: #536471; --border: #cfd9de; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: white; }
+        .container { width: 100%; max-width: 600px; padding: 20px; box-sizing: border-box; }
+        .logo { width: 30px; height: 30px; margin: 0 auto 20px; display: block; }
+        h1 { font-size: 26px; font-weight: 700; margin-bottom: 20px; }
+        .input-group { position: relative; margin-bottom: 20px; }
+        input, select { width: 100%; height: 56px; padding: 20px 10px 8px; font-size: 17px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; outline: none; background: white;}
+        input:focus, select:focus { border-color: #1d9bf0; ring: 2px solid #1d9bf0; }
+        label { position: absolute; top: 18px; left: 10px; color: var(--gray); font-size: 17px; pointer-events: none; transition: 0.2s; }
+        input:focus + label, input:not(:placeholder-shown) + label, select:valid + label { top: 6px; font-size: 12px; color: #1d9bf0; }
+        .btn-black { background: black; color: white; border: none; border-radius: 9999px; height: 50px; width: 100%; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 20px; }
+        .step { display: none; }
+        .step.active { display: block; }
+        .date-row { display: flex; gap: 10px; }
+        .date-row div { flex: 1; position: relative; }
+        .valid-icon { position: absolute; right: 10px; top: 18px; color: green; display: none; }
+        .input-group.valid input { border-color: green; }
+        .input-group.valid .valid-icon { display: block; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="logo">
-        <svg viewBox="0 0 24 24" aria-hidden="true" width="30" height="30"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg>
-    </div>
+    <svg class="logo" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
+    <h1>Create your account</h1>
 
     <!-- Step 1: Name -->
     <div id="step1" class="step active">
-        <h2>Create your account</h2>
         <div class="input-group">
-            <input type="text" id="firstName" placeholder="First Name">
+            <input type="text" id="firstName" placeholder=" " oninput="validateStep1()">
+            <label>First Name</label>
         </div>
         <div class="input-group">
-            <input type="text" id="lastName" placeholder="Last Name">
+            <input type="text" id="lastName" placeholder=" " oninput="validateStep1()">
+            <label>Last Name</label>
         </div>
-        <button class="btn-next" onclick="nextStep(1)">Next</button>
+        <button class="btn-black" id="btn1" onclick="nextStep(2)" disabled>Next</button>
     </div>
 
     <!-- Step 2: DOB & Gender -->
     <div id="step2" class="step">
-        <h2>Basic Info</h2>
-        <p>Date of birth</p>
-        <div class="dob-container">
-            <select id="month" style="flex:2;"></select>
-            <select id="day" style="flex:1;"></select>
-            <select id="year" style="flex:1;"></select>
+        <p style="font-weight:700">Date of birth</p>
+        <p style="color:var(--gray); font-size:14px; margin-bottom:15px;">This will not be shown publicly.</p>
+        <div class="date-row">
+            <div class="input-group">
+                <select id="month" required><option></option><option value="Jan">Jan</option><option value="Feb">Feb</option><option value="Mar">Mar</option><option value="Apr">Apr</option><option value="May">May</option><option value="Jun">Jun</option><option value="Jul">Jul</option><option value="Aug">Aug</option><option value="Sep">Sep</option><option value="Oct">Oct</option><option value="Nov">Nov</option><option value="Dec">Dec</option></select>
+                <label>Month</label>
+            </div>
+            <div class="input-group">
+                <select id="day" required><option></option><!-- JS will fill --></select>
+                <label>Day</label>
+            </div>
+            <div class="input-group">
+                <select id="year" required><option></option><!-- JS will fill --></select>
+                <label>Year</label>
+            </div>
         </div>
-        <div class="input-group" style="margin-top:20px;">
-            <label>Gender</label>
-            <select id="gender">
+        <div class="input-group" style="margin-top:10px;">
+            <select id="gender" required>
+                <option></option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
                 <option value="Rather not to say">Rather not to say</option>
             </select>
+            <label>Gender</label>
         </div>
-        <button class="btn-next" onclick="nextStep(2)">Next</button>
+        <button class="btn-black" onclick="nextStep(3)">Next</button>
     </div>
 
     <!-- Step 3: Mobile -->
     <div id="step3" class="step">
-        <h2>Add your phone</h2>
         <div class="input-group">
-            <input type="tel" id="mobile" placeholder="Mobile Number">
+            <input type="tel" id="mobile" placeholder=" ">
+            <label>Mobile Number</label>
         </div>
-        <button class="btn-next" onclick="nextStep(3)">Next</button>
+        <button class="btn-black" onclick="nextStep(4)">Next</button>
     </div>
 
     <!-- Step 4: Email -->
     <div id="step4" class="step">
-        <h2>Create your email</h2>
+        <p>Create your email address (ends with @pplx.com)</p>
         <div class="input-group">
-            <input type="text" id="emailPrefix" placeholder="username" onkeyup="validateEmailInput(this)">
-            <span style="position: absolute; right: 40px; margin-top: -35px; color: #536471;">@pplx.com</span>
-            <div id="emailError" class="error"></div>
+            <input type="text" id="emailPart" placeholder=" " oninput="validateEmailPart()">
+            <label>Email ID</label>
+            <span style="position:absolute; right:10px; top:18px; color:var(--gray);">@pplx.com</span>
         </div>
-        <p style="font-size:13px; color:gray;">Only alphabets, numbers, +, -, _ allowed. No caps.</p>
-        <button class="btn-next" onclick="nextStep(4)">Next</button>
+        <p id="emailError" style="color:red; font-size:12px; display:none;">Only lowercase alphabets, numbers, +, - allowed.</p>
+        <button class="btn-black" id="btn4" onclick="nextStep(5)" disabled>Next</button>
     </div>
 
     <!-- Step 5: Password -->
     <div id="step5" class="step">
-        <h2>You'll need a password</h2>
+        <h1>You'll need a password</h1>
+        <p style="color:var(--gray)">Make sure it's 8 characters or more.</p>
         <div class="input-group">
-            <input type="password" id="password" placeholder="Password (8+ chars)">
+            <input type="password" id="password" placeholder=" ">
+            <label>Password</label>
         </div>
-        <button class="btn-next" onclick="finishSignup()">Sign up</button>
+        <button class="btn-black" onclick="submitSignup()">Sign up</button>
     </div>
+
 </div>
 
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
-        authDomain: "xperts-metadata.firebaseapp.com",
-        projectId: "xperts-metadata",
-        storageBucket: "xperts-metadata.firebasestorage.app",
-        messagingSenderId: "514845910910",
-        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
-        measurementId: "G-CQ5KWGJSZB"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Populate DOB
-    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    const mSelect = document.getElementById('month');
-    months.forEach((m, i) => mSelect.innerHTML += `<option value="${i+1}">${m}</option>`);
-    
-    const dSelect = document.getElementById('day');
-    for(let i=1; i<=31; i++) dSelect.innerHTML += `<option value="${i}">${i}</option>`;
-
-    const ySelect = document.getElementById('year');
-    const currentYear = new Date().getFullYear();
-    for(let i=currentYear; i>=1900; i--) ySelect.innerHTML += `<option value="${i}">${i}</option>`;
+    // Fill Dates
+    for(let i=1;i<=31;i++) document.getElementById('day').add(new Option(i, i));
+    for(let i=2025;i>=1900;i--) document.getElementById('year').add(new Option(i, i));
 
     let userData = {};
 
-    function nextStep(current) {
-        if(current === 1) {
-            if(!document.getElementById('firstName').value || !document.getElementById('lastName').value) return alert("Name required");
-            userData.firstName = document.getElementById('firstName').value;
-            userData.lastName = document.getElementById('lastName').value;
-        }
-        if(current === 2) {
-            userData.dob = `${document.getElementById('year').value}-${document.getElementById('month').value}-${document.getElementById('day').value}`;
-            userData.gender = document.getElementById('gender').value;
-        }
-        if(current === 3) {
-            if(!document.getElementById('mobile').value) return alert("Mobile required");
-            userData.mobile = document.getElementById('mobile').value;
-        }
-        if(current === 4) {
-            const prefix = document.getElementById('emailPrefix').value;
-            if(!prefix || document.getElementById('emailError').innerText !== "") return alert("Invalid Email");
-            userData.email = prefix + "@pplx.com";
-        }
-
-        document.getElementById(`step${current}`).classList.remove('active');
-        document.getElementById(`step${current+1}`).classList.add('active');
+    function validateStep1() {
+        const f = document.getElementById('firstName').value;
+        const l = document.getElementById('lastName').value;
+        document.getElementById('btn1').disabled = !(f && l);
     }
 
-    function validateEmailInput(input) {
-        const val = input.value;
-        // Regex: Lowercase a-z, 0-9, +, -, _
-        const regex = /^[a-z0-9\+\-\_]+$/;
+    function validateEmailPart() {
+        const el = document.getElementById('emailPart');
+        let val = el.value;
+        // Regex: Only lowercase a-z, 0-9, +, -, _
+        const regex = /^[a-z0-9+\-_]+$/;
         
         if (/[A-Z]/.test(val)) {
-            input.value = val.toLowerCase();
-        }
-        
-        if (!regex.test(input.value) && input.value.length > 0) {
-            document.getElementById('emailError').innerText = "Invalid characters allowed.";
+            // No caps allowed
+            document.getElementById('emailError').style.display = 'block';
+            document.getElementById('btn4').disabled = true;
+        } else if (val.length > 0 && !regex.test(val)) {
+             document.getElementById('emailError').style.display = 'block';
+             document.getElementById('btn4').disabled = true;
         } else {
-            document.getElementById('emailError').innerText = "";
+             document.getElementById('emailError').style.display = 'none';
+             document.getElementById('btn4').disabled = val.length === 0;
         }
     }
 
-    async function finishSignup() {
-        const password = document.getElementById('password').value;
-        if(password.length < 8) return alert("Password must be 8+ chars");
-        userData.password = password;
+    async function nextStep(n) {
+        if(n === 4) {
+            // Check mobile uniqueness (skip for demo simplicity or implement here)
+            userData.mobile = document.getElementById('mobile').value;
+            if(!userData.mobile) return;
+        }
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        document.getElementById('step'+n).classList.add('active');
+    }
 
-        // Random Color for DP
-        const randomColor = '#' + Math.floor(Math.random()*16777215).toString(16);
-        userData.dpColor = randomColor;
+    function getRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) { color += letters[Math.floor(Math.random() * 16)]; }
+        return color;
+    }
+
+    async function submitSignup() {
+        const email = document.getElementById('emailPart').value + "@pplx.com";
+        const password = document.getElementById('password').value;
+        
+        userData.firstName = document.getElementById('firstName').value;
+        userData.lastName = document.getElementById('lastName').value;
+        userData.dob = `${document.getElementById('month').value} ${document.getElementById('day').value}, ${document.getElementById('year').value}`;
+        userData.gender = document.getElementById('gender').value;
+        userData.email = email;
+        userData.password = password;
+        userData.color = getRandomColor();
+        
+        // Check if email exists
+        const check = await db.collection('users').where('email', '==', email).get();
+        if(!check.empty) {
+            alert("Email already exists!");
+            document.getElementById('step4').classList.add('active');
+            document.getElementById('step5').classList.remove('active');
+            return;
+        }
 
         try {
-            // Check if email exists
-            const doc = await db.collection('users').doc(userData.email).get();
-            if(doc.exists) return alert("Email already exists");
-
-            await db.collection('users').doc(userData.email).set(userData);
-            
-            // Login Success
-            let sessions = JSON.parse(localStorage.getItem('x_users_sessions') || '[]');
-            sessions.push({ email: userData.email, data: userData });
-            localStorage.setItem('x_users_sessions', JSON.stringify(sessions));
-
-            window.location.href = "1.html";
+            await db.collection('users').add(userData);
+            alert("Account created!");
+            window.location.href = "1.html?email=" + email;
         } catch(e) {
             console.error(e);
             alert("Error creating account");
