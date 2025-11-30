@@ -2,60 +2,98 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Enter Code</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <style>
-        body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; height: 100vh; align-items: center; margin: 0; }
-        .container { width: 400px; padding: 20px; }
-        .logo { font-size: 30px; margin-bottom: 20px; }
-        .input-box { width: 100%; padding: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; letter-spacing: 5px; font-size: 20px; text-align: center; }
-        .btn { width: 100%; padding: 15px; background: #000; color: #fff; border-radius: 25px; border: none; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; height: 100vh; margin:0; }
+        .container { width: 100%; max-width: 600px; padding: 20px; }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cfd9de; border-radius: 4px; box-sizing:border-box; }
+        .btn { width: 100%; padding: 12px; border-radius: 30px; border: none; background: #000; color: #fff; font-weight: bold; cursor: pointer; }
+        .hidden { display: none; }
+        p { font-size: 14px; color: #536471; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <i class="fa-brands fa-x-twitter logo"></i>
+
+<div class="container">
+    <div id="step-code">
         <h1>We sent you a code</h1>
-        <p>Check your other logged-in devices to get the confirmation code.</p>
-        <p style="font-size: 13px; color: #666">Check 6.html?email=... to see the code</p>
-        
-        <input type="text" id="otp-input" class="input-box" placeholder="XXXXXX" maxlength="6">
-        <button class="btn" onclick="verifyCode()">Next</button>
-        <p id="msg" style="color:red; text-align:center; display:none"></p>
+        <p>Check your other logged-in device (Go to Security Code page) to get the code. It expires in 5 minutes.</p>
+        <input type="text" id="code" placeholder="Enter confirmation code">
+        <button class="btn" onclick="verifyCode()">Verify</button>
     </div>
 
-<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+    <div id="step-newpass" class="hidden">
+        <h1>Reset your password</h1>
+        <input type="password" id="newpass" placeholder="New password">
+        <button class="btn" onclick="resetPassword()">Reset Password</button>
+    </div>
+</div>
+
 <script>
-    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const urlParams = new URLSearchParams(window.location.search);
     const email = urlParams.get('email');
 
+    if(!email) { alert("Invalid Request"); window.location.href="1.html"; }
+
     async function verifyCode() {
-        const entered = document.getElementById('otp-input').value;
-        const msg = document.getElementById('msg');
+        const codeInput = document.getElementById('code').value;
         
-        if(!email) { msg.innerText = "No email provided"; msg.style.display = 'block'; return; }
+        try {
+            const doc = await db.collection('users').doc(email).get();
+            if(!doc.exists) return alert("User not found");
 
-        const snap = await db.collection('users').where('email', '==', email).get();
-        if(snap.empty) { msg.innerText = "User not found"; msg.style.display = 'block'; return; }
+            const data = doc.data();
+            const serverCode = data.securityCode;
+            const timestamp = data.codeTimestamp; // Firestore Timestamp
+            
+            // Time Check (5 mins = 300 seconds)
+            const now = new Date();
+            const codeTime = timestamp.toDate();
+            const diff = (now - codeTime) / 1000;
 
-        const data = snap.docs[0].data();
-        const now = Date.now();
-        
-        // Validate OTP and Time (5 mins = 300000 ms)
-        if (data.otp === entered && (now - data.otpTimestamp) < 300000) {
-            // Success - Redirect to login or auto-login
-            // For this flow, we go back to login with pre-filled email
-            alert("Verified! You can now login (In real app, reset password here).");
-            window.location.href = `1.html?email=${email}`;
-        } else {
-            msg.innerText = "Invalid or expired code"; 
-            msg.style.display = 'block';
+            if (diff > 300) {
+                alert("Code expired");
+                return;
+            }
+
+            if (serverCode == codeInput) {
+                document.getElementById('step-code').classList.add('hidden');
+                document.getElementById('step-newpass').classList.remove('hidden');
+            } else {
+                alert("Incorrect code");
+            }
+        } catch(e) {
+            console.error(e);
+            alert("Error verifying code");
         }
+    }
+
+    async function resetPassword() {
+        const newPass = document.getElementById('newpass').value;
+        if(newPass.length < 8) return alert("Password too short");
+
+        await db.collection('users').doc(email).update({
+            password: newPass
+        });
+
+        alert("Password updated! Please login.");
+        window.location.href = "1.html";
     }
 </script>
 </body>
