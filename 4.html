@@ -2,125 +2,105 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Find your X account</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <title>Find your email</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; }
-        .container { width: 100%; max-width: 500px; padding: 20px; }
-        h1 { font-size: 24px; margin-bottom: 20px; }
-        .input-group { border: 1px solid #cfd9de; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
-        .input-group:focus-within { border-color: #1d9bf0; }
-        .input-group input { width: 100%; border: none; outline: none; font-size: 16px; }
-        .btn { width: 100%; height: 50px; background: #000; color: #fff; border-radius: 25px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .email-list-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; color: #1d9bf0; }
-        .email-list-item:hover { background: #f0f0f0; }
+        /* Reusing style for consistency */
+        body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; height: 100vh; align-items: center; margin: 0; }
+        .container { width: 400px; padding: 20px; }
+        .logo { font-size: 30px; margin-bottom: 20px; }
+        h1 { margin-bottom: 10px; }
+        .input-box { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 15px; background: #000; color: #fff; border-radius: 25px; border: none; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .list-item { padding: 15px; border: 1px solid #eee; margin-top: 5px; cursor: pointer; border-radius: 8px; }
+        .list-item:hover { background: #f0f0f0; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px; border-radius: 4px; display: none; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <div style="font-size:30px; font-weight:bold; margin-bottom:20px;">X</div>
-    
-    <div id="step-phone">
-        <h1>Find your account</h1>
-        <p>Enter your phone number to get started.</p>
-        <div class="input-group">
-            <input type="tel" id="mobile" placeholder="Phone number">
+    <div class="toast" id="toast"></div>
+    <div class="container">
+        <i class="fa-brands fa-x-twitter logo"></i>
+        
+        <div id="view-phone">
+            <h1>Find your X account</h1>
+            <p>Enter your phone number associated with your account.</p>
+            <input type="tel" id="mobile-in" class="input-box" placeholder="Mobile number">
+            <button class="btn" onclick="checkMobile()">Next</button>
         </div>
-        <button class="btn" onclick="checkPhone()">Next</button>
+
+        <div id="view-name" style="display:none">
+            <h1>What's your name?</h1>
+            <input type="text" id="fname" class="input-box" placeholder="First Name">
+            <input type="text" id="lname" class="input-box" placeholder="Last Name">
+            <button class="btn" onclick="searchAccount()">Next</button>
+        </div>
+
+        <div id="view-results" style="display:none">
+            <h1>Choose your account</h1>
+            <div id="email-list"></div>
+        </div>
     </div>
 
-    <div id="step-name" style="display:none;">
-        <h1>What's your name?</h1>
-        <div class="input-group">
-            <input type="text" id="fname" placeholder="First Name">
-        </div>
-        <div class="input-group">
-            <input type="text" id="lname" placeholder="Last Name">
-        </div>
-        <button class="btn" onclick="checkName()">Next</button>
-    </div>
-
-    <div id="step-result" style="display:none;">
-        <h1>Choose an account</h1>
-        <div id="email-results"></div>
-    </div>
-</div>
-
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
-        authDomain: "xperts-metadata.firebaseapp.com",
-        projectId: "xperts-metadata",
-        storageBucket: "xperts-metadata.firebasestorage.app",
-        messagingSenderId: "514845910910",
-        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
-        measurementId: "G-CQ5KWGJSZB"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const urlParams = new URLSearchParams(window.location.search);
-    const urlMobile = urlParams.get('mobile');
-    const urlGoto = urlParams.get('goto');
+    const mobileParam = urlParams.get('mobile');
 
-    let phoneToSearch = "";
-
-    window.onload = function() {
-        if(urlMobile) {
-            document.getElementById('mobile').value = urlMobile;
-            phoneToSearch = urlMobile;
-            // Skip to name check if mobile provided
-            document.getElementById('step-phone').style.display = 'none';
-            document.getElementById('step-name').style.display = 'block';
-        }
+    if(mobileParam) {
+        document.getElementById('mobile-in').value = mobileParam;
     }
 
-    async function checkPhone() {
-        phoneToSearch = document.getElementById('mobile').value.trim();
-        if(!phoneToSearch) return alert("Enter phone number");
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    async function checkMobile() {
+        const mob = document.getElementById('mobile-in').value.trim();
+        if(!mob) return showToast("Enter mobile");
         
-        // In a real app we might verify phone exists first, but here we just ask name
-        document.getElementById('step-phone').style.display = 'none';
-        document.getElementById('step-name').style.display = 'block';
+        // In real world, verify mobile exists first, but prompt says "Ask Name"
+        document.getElementById('view-phone').style.display = 'none';
+        document.getElementById('view-name').style.display = 'block';
     }
 
-    async function checkName() {
-        const fname = document.getElementById('fname').value.trim();
-        const lname = document.getElementById('lname').value.trim();
+    async function searchAccount() {
+        const mob = document.getElementById('mobile-in').value.trim();
+        const f = document.getElementById('fname').value.trim();
+        const l = document.getElementById('lname').value.trim();
 
-        if(!fname || !lname) return alert("Enter full name");
-
-        // Query Firestore
-        const snapshot = await db.collection('users')
-            .where('phone', '==', phoneToSearch)
-            .where('firstName', '==', fname)
-            .where('lastName', '==', lname)
+        const snap = await db.collection('users')
+            .where('mobile', '==', mob)
+            .where('firstName', '==', f)
+            .where('lastName', '==', l)
             .get();
 
-        if(snapshot.empty) {
-            alert("No account found with this information.");
+        if (snap.empty) {
+            showToast("No account found matching these details");
             return;
         }
 
-        document.getElementById('step-name').style.display = 'none';
-        document.getElementById('step-result').style.display = 'block';
-        const list = document.getElementById('email-results');
+        document.getElementById('view-name').style.display = 'none';
+        document.getElementById('view-results').style.display = 'block';
+        const list = document.getElementById('email-list');
         
-        snapshot.forEach(doc => {
+        snap.forEach(doc => {
             const data = doc.data();
-            const div = document.createElement('div');
-            div.className = 'email-list-item';
-            div.innerText = data.email;
-            div.onclick = function() {
-                // Redirect logic
-                // if urlGoto exists, maybe do something, but prompt says:
-                // redirect to 1.html?email=<clicked>
+            const el = document.createElement('div');
+            el.className = 'list-item';
+            el.innerText = data.email;
+            el.onclick = () => {
                 window.location.href = `1.html?email=${data.email}`;
-            }
-            list.appendChild(div);
+            };
+            list.appendChild(el);
         });
     }
 </script>

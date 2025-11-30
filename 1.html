@@ -3,84 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in to X</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <title>Log in to X</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; display: flex; justify-content: center; height: 100vh; background-color: #fff; color: #0f1419; }
-        .container { width: 100%; max-width: 600px; padding: 20px; display: flex; flex-direction: column; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #fff; color: #0f1419; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 400px; padding: 20px; box-sizing: border-box; }
         .header { display: flex; justify-content: center; margin-bottom: 30px; }
-        .x-logo { font-size: 30px; font-weight: bold; }
-        h1 { font-size: 31px; margin-bottom: 30px; font-weight: 700; }
-        
-        .input-group { position: relative; margin-bottom: 20px; border: 1px solid #cfd9de; border-radius: 4px; padding: 8px; height: 56px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; transition: border-color 0.2s; }
-        .input-group:focus-within { border-color: #1d9bf0; ring: 2px solid #1d9bf0; }
-        .input-group label { font-size: 13px; color: #536471; margin-bottom: 2px; }
-        .input-group input { border: none; outline: none; font-size: 17px; width: 100%; color: #0f1419; padding: 0; margin: 0; }
-        
-        .btn { width: 100%; height: 50px; border-radius: 25px; border: none; font-size: 17px; font-weight: bold; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; }
-        .btn-black { background-color: #0f1419; color: white; }
-        .btn-white { background-color: white; border: 1px solid #cfd9de; color: #0f1419; }
-        .btn:disabled { opacity: 0.5; }
-
-        .links { margin-top: 20px; font-size: 14px; color: #1d9bf0; cursor: pointer; }
+        .logo { font-size: 30px; color: #0f1419; }
+        h1 { font-size: 31px; font-weight: 700; margin-bottom: 30px; color: #0f1419; }
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group label { display: block; font-size: 13px; color: #536471; margin-bottom: 4px; }
+        .input-box { width: 100%; padding: 16px 12px; font-size: 17px; border: 1px solid #cfd9de; border-radius: 4px; outline: none; box-sizing: border-box; transition: border-color 0.2s; }
+        .input-box:focus { border-color: #1d9bf0; }
+        .btn { width: 100%; background-color: #0f1419; color: #fff; border: none; padding: 15px; border-radius: 25px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 10px; }
+        .btn:disabled { opacity: 0.5; cursor: default; }
+        .btn-outline { background-color: transparent; color: #0f1419; border: 1px solid #cfd9de; margin-top: 10px; }
+        .action-link { margin-top: 20px; font-size: 14px; color: #1d9bf0; cursor: pointer; text-decoration: none; display: inline-block; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1d9bf0; color: white; padding: 12px 24px; border-radius: 4px; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .hidden { display: none; }
-        .eye-icon { position: absolute; right: 15px; top: 18px; cursor: pointer; font-size: 14px; }
-        
-        /* Checkmark */
-        .valid-check { color: #00ba7c; position: absolute; right: 10px; top: 18px; font-size: 18px; display: none; }
-        .input-group.valid .valid-check { display: block; }
+        .pass-toggle { position: absolute; right: 15px; top: 38px; cursor: pointer; color: #536471; }
     </style>
 </head>
 <body>
 
+<div class="toast" id="toast"></div>
+
 <div class="container">
-    <div class="header"><div class="x-logo">X</div></div>
-    
-    <div id="step-identifier">
-        <h1>Sign in to X</h1>
+    <div class="header"><i class="fa-brands fa-x-twitter logo"></i></div>
+    <h1 id="page-title">Sign in to X</h1>
+
+    <!-- Step 1: Identify -->
+    <div id="step-identify">
         <div class="input-group">
-            <label>Phone, email, or username</label>
-            <input type="text" id="identifier">
+            <input type="text" id="identifier" class="input-box" placeholder="Phone, email, or username">
         </div>
-        <button class="btn btn-black" onclick="handleIdentifierNext()">Next</button>
-        <button class="btn btn-white" onclick="goToForgotEmail()">Forgot email?</button>
-        <p style="text-align:center; font-size:14px;">Don't have an account? <a href="2.html" style="color:#1d9bf0;text-decoration:none;">Sign up</a></p>
+        <button class="btn" onclick="handleNext()">Next</button>
+        <button class="btn btn-outline" onclick="window.location.href='4.html'">Forgot email?</button>
+        <div style="text-align: center; margin-top: 20px;">
+            <p style="font-size: 14px; color: #536471;">Don't have an account? <a href="2.html" style="color: #1d9bf0; text-decoration: none;">Sign up</a></p>
+        </div>
     </div>
 
-    <!-- Hidden: Verify Email if Phone was used -->
-    <div id="step-verify-email" class="hidden">
-        <h1>Verify it's you</h1>
-        <p style="color:#536471; font-size:15px; margin-bottom:20px;">Enter your email to continue.</p>
+    <!-- Step 2: Confirm Email (If logged in via Mobile) -->
+    <div id="step-confirm-email" class="hidden">
+        <p style="color: #536471; margin-bottom: 20px;">Please verify your email address to continue.</p>
         <div class="input-group">
-            <label>Email address</label>
-            <input type="text" id="verify-email-input">
+            <input type="email" id="confirm-email-input" class="input-box" placeholder="Enter your email address">
         </div>
-        <button class="btn btn-black" onclick="handleVerifyEmailNext()">Next</button>
-        <div class="links" onclick="goToForgotEmail()">Forgot email?</div>
+        <button class="btn" onclick="verifyLinkedEmail()">Next</button>
+        <a href="#" class="action-link" onclick="goToForgotEmail()">Forgot email?</a>
     </div>
 
-    <!-- Hidden: Password -->
+    <!-- Step 3: Password -->
     <div id="step-password" class="hidden">
-        <h1>Enter your password</h1>
-        <div class="input-group" style="background:#f7f9f9;" disabled>
-            <label>Email</label>
-            <input type="text" id="display-email" disabled style="background:#f7f9f9; color:#536471;">
-        </div>
-        
         <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="password">
-            <span class="eye-icon" onclick="togglePassword()">👁️</span>
+            <input type="text" id="read-only-email" class="input-box" style="background:#f7f9f9; color:#536471" disabled>
         </div>
-        
-        <button class="btn btn-black" onclick="handleLogin()">Log in</button>
-        <div class="links" onclick="goToForgotPassword()">Forgot password?</div>
+        <div class="input-group">
+            <input type="password" id="password" class="input-box" placeholder="Password">
+            <i class="fa-regular fa-eye-slash pass-toggle" onclick="togglePass()"></i>
+        </div>
+        <button class="btn" onclick="handleLogin()">Log in</button>
+        <a href="#" class="action-link" onclick="goToForgotPassword()">Forgot password?</a>
     </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
         authDomain: "xperts-metadata.firebaseapp.com",
@@ -93,131 +84,143 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // URL Params
     const urlParams = new URLSearchParams(window.location.search);
-    const paramEmail = urlParams.get('email');
-    const paramType = urlParams.get('type');
+    const emailParam = urlParams.get('email');
+    const typeParam = urlParams.get('type');
+    
+    // Check local session
+    const currentUser = localStorage.getItem('x_current_user');
+    if (currentUser && typeParam !== 'another-login') {
+        // If already logged in and not asking to add account
+        window.location.href = "https://abc.xyz";
+    }
 
-    let currentEmail = "";
-    let currentPhone = "";
+    let globalUserData = null;
 
     // Initialization
-    window.onload = function() {
-        // Auto-fill from URL
-        if(paramEmail) {
-            document.getElementById('identifier').value = paramEmail;
-            currentEmail = paramEmail;
-            showPasswordStep(paramEmail);
-        } else {
-            // Check persistence unless creating another login
-            const session = localStorage.getItem('x_user_session');
-            if(session && paramType !== 'another-login') {
-                 window.location.href = "https://abc.xyz";
-            }
-        }
-    };
-
-    async function handleIdentifierNext() {
-        const input = document.getElementById('identifier').value.trim();
-        if(!input) return alert("Please enter email or phone");
-
-        // Simple check: is it email or phone?
-        const isEmail = input.includes('@');
-
-        if(isEmail) {
-            currentEmail = input;
-            // Validate if email exists in DB
-            const snapshot = await db.collection('users').where('email', '==', currentEmail).get();
-            if(snapshot.empty) {
-                alert("Sorry, we could not find your account.");
-                return;
-            }
-            showPasswordStep(currentEmail);
-        } else {
-            // It's a phone number
-            currentPhone = input;
-            const snapshot = await db.collection('users').where('phone', '==', currentPhone).get();
-            if(snapshot.empty) {
-                alert("Phone number not found.");
-                return;
-            }
-            // Ask for email for verification
-            document.getElementById('step-identifier').classList.add('hidden');
-            document.getElementById('step-verify-email').classList.remove('hidden');
-        }
-    }
-
-    async function handleVerifyEmailNext() {
-        const emailInput = document.getElementById('verify-email-input').value.trim();
-        // Verify this email belongs to the phone number
-        const snapshot = await db.collection('users')
-            .where('phone', '==', currentPhone)
-            .where('email', '==', emailInput)
-            .get();
-
-        if(snapshot.empty) {
-            alert("Email does not match our records for this phone number.");
-            return;
-        }
-        currentEmail = emailInput;
-        showPasswordStep(currentEmail);
-    }
-
-    function showPasswordStep(email) {
-        document.getElementById('step-identifier').classList.add('hidden');
-        document.getElementById('step-verify-email').classList.add('hidden');
+    if (emailParam) {
+        // Case 4: URL has email
+        document.getElementById('step-identify').classList.add('hidden');
         document.getElementById('step-password').classList.remove('hidden');
-        document.getElementById('display-email').value = email;
+        document.getElementById('read-only-email').value = emailParam;
+        
+        // Fetch user data in background to ensure it exists
+        db.collection('users').where('email', '==', emailParam).get().then(snap => {
+            if(!snap.empty) globalUserData = snap.docs[0].data();
+        });
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
+    }
+
+    async function handleNext() {
+        const input = document.getElementById('identifier').value.trim();
+        if(!input) return showToast("Please enter phone, email or username");
+
+        // Check if input is email or phone
+        const isEmail = input.includes('@');
+        
+        if (isEmail) {
+            // Case: Login via Email
+            const snap = await db.collection('users').where('email', '==', input).get();
+            if (snap.empty) return showToast("Could not find your account");
+            
+            // Check if this email is already logged in on this device
+            const loggedInUsers = JSON.parse(localStorage.getItem('x_users_list') || '[]');
+            if(loggedInUsers.some(u => u.email === input)) {
+                return showToast("Email Already Logged in This Device");
+            }
+
+            globalUserData = snap.docs[0].data();
+            document.getElementById('step-identify').classList.add('hidden');
+            document.getElementById('step-password').classList.remove('hidden');
+            document.getElementById('read-only-email').value = input;
+        } else {
+            // Case 1: Login via Mobile
+            const snap = await db.collection('users').where('mobile', '==', input).get();
+            if (snap.empty) return showToast("Could not find account with this number");
+            
+            globalUserData = snap.docs[0].data();
+            // Prompt says: "If Mobile Number is Correct then ask For email id"
+            document.getElementById('step-identify').classList.add('hidden');
+            document.getElementById('step-confirm-email').classList.remove('hidden');
+        }
+    }
+
+    function verifyLinkedEmail() {
+        const enteredEmail = document.getElementById('confirm-email-input').value.trim();
+        if (enteredEmail === globalUserData.email) {
+            document.getElementById('step-confirm-email').classList.add('hidden');
+            document.getElementById('step-password').classList.remove('hidden');
+            document.getElementById('read-only-email').value = enteredEmail;
+        } else {
+            showToast("Incorrect email address.");
+        }
     }
 
     async function handleLogin() {
-        const password = document.getElementById('password').value;
-        
-        const snapshot = await db.collection('users')
-            .where('email', '==', currentEmail)
-            .where('password', '==', password)
-            .get();
+        const pass = document.getElementById('password').value;
+        const email = document.getElementById('read-only-email').value;
 
-        if(snapshot.empty) {
-            alert("Wrong password.");
-            return;
+        if (!globalUserData) {
+            // Re-fetch if needed
+            const snap = await db.collection('users').where('email', '==', email).get();
+            if(!snap.empty) globalUserData = snap.docs[0].data();
         }
 
-        // Login Success
-        const userData = snapshot.docs[0].data();
-        
-        // Save to Local Storage (Session & Multi-login support)
-        let accounts = JSON.parse(localStorage.getItem('x_accounts') || "[]");
-        // Check if account already saved
-        const exists = accounts.find(a => a.email === currentEmail);
-        if(!exists) {
-            accounts.push(userData);
-            localStorage.setItem('x_accounts', JSON.stringify(accounts));
-        }
-        
-        localStorage.setItem('x_user_session', JSON.stringify(userData));
+        if (globalUserData && globalUserData.password === pass) {
+            // Success
+            const session = {
+                email: globalUserData.email,
+                name: globalUserData.firstName + ' ' + globalUserData.lastName,
+                dpColor: globalUserData.profileColor || '#000',
+                loginTime: new Date().toISOString()
+            };
 
-        if(paramType === 'another-login') {
-            // If logged in as secondary, maybe go to switcher or home? 
-            // Prompt says "not redirect to abc.xyz" but implies flow completion.
-            // We will redirect to switcher to see accounts.
-            window.location.href = "3.html";
-        } else {
+            // Add to multi-login list
+            let list = JSON.parse(localStorage.getItem('x_users_list') || '[]');
+            // remove duplicates
+            list = list.filter(u => u.email !== session.email);
+            list.push(session);
+            localStorage.setItem('x_users_list', JSON.stringify(list));
+            
+            // Set active user
+            localStorage.setItem('x_current_user', JSON.stringify(session));
+
+            // Redirect
             window.location.href = "https://abc.xyz";
+        } else {
+            showToast("Wrong password");
+        }
+    }
+
+    function togglePass() {
+        const p = document.getElementById('password');
+        const i = document.querySelector('.pass-toggle');
+        if (p.type === 'password') {
+            p.type = 'text';
+            i.classList.remove('fa-eye-slash');
+            i.classList.add('fa-eye');
+        } else {
+            p.type = 'password';
+            i.classList.add('fa-eye-slash');
+            i.classList.remove('fa-eye');
         }
     }
 
     function goToForgotEmail() {
+        // Redirect to 4.html
         window.location.href = "4.html";
     }
 
     function goToForgotPassword() {
-        window.location.href = `5.html?email=${currentEmail}`;
-    }
-
-    function togglePassword() {
-        const p = document.getElementById('password');
-        p.type = p.type === "password" ? "text" : "password";
+        const email = document.getElementById('read-only-email').value;
+        // Redirect to 5.html with param
+        window.location.href = `5.html?email=${email}`;
     }
 </script>
 </body>

@@ -4,78 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign up for X</title>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Same Base Styles */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; display: flex; justify-content: center; background-color: #fff; }
-        .container { width: 100%; max-width: 600px; padding: 20px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #999; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .modal { background: #fff; width: 100%; max-width: 600px; min-height: 500px; border-radius: 16px; padding: 20px; box-sizing: border-box; position: relative; display: flex; flex-direction: column; }
         .header { display: flex; align-items: center; margin-bottom: 20px; }
-        .back-btn { font-size: 24px; cursor: pointer; margin-right: 20px; }
-        .x-logo { font-size: 24px; font-weight: bold; flex-grow: 1; text-align: center; margin-right: 44px; }
-        h1 { font-size: 31px; margin-bottom: 30px; }
-        
-        .input-group { position: relative; margin-bottom: 25px; border: 1px solid #cfd9de; border-radius: 4px; padding: 8px; height: 58px; box-sizing: border-box; }
-        .input-group:focus-within { border-color: #1d9bf0; }
-        .input-group label { display: block; font-size: 13px; color: #536471; }
-        .input-group input, .input-group select { border: none; outline: none; font-size: 17px; width: 100%; padding-top: 2px; background: transparent; }
-        
-        .valid-icon { color: #00ba7c; position: absolute; right: 10px; top: 18px; display: none; }
-        .input-group.valid { border-color: #cfd9de; } /* X keeps grey border usually unless focused */
-        .input-group.valid .valid-icon { display: block; }
-
-        .btn-next { width: 100%; height: 50px; background-color: #0f1419; color: white; border-radius: 25px; font-weight: bold; font-size: 17px; border: none; cursor: pointer; margin-top: auto; }
-        
-        .step { display: none; }
-        .step.active { display: block; }
-        
-        .dob-container { display: flex; gap: 10px; }
-        .dob-container .input-group { flex: 1; }
+        .close-btn { font-size: 20px; cursor: pointer; margin-right: 20px; }
+        .logo { flex-grow: 1; text-align: center; font-size: 24px; margin-right: 40px; } 
+        h2 { margin: 20px 0; font-size: 24px; }
+        .step { display: none; flex-direction: column; flex-grow: 1; }
+        .step.active { display: flex; }
+        .input-wrapper { margin-bottom: 20px; }
+        input, select { width: 100%; padding: 15px; border: 1px solid #cfd9de; border-radius: 4px; font-size: 16px; box-sizing: border-box; margin-top: 5px; }
+        .dob-group { display: flex; gap: 10px; }
+        .btn { background: #000; color: #fff; border: none; padding: 15px; border-radius: 30px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: auto; }
+        .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 4px; display: none; }
+        .email-suffix { position: absolute; right: 15px; top: 22px; color: #536471; background: #fff; padding-left: 5px; }
+        .relative { position: relative; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <span class="back-btn" onclick="history.back()">←</span>
-        <div class="x-logo">X</div>
-    </div>
-    <h1 id="page-title">Create your account</h1>
+<div class="toast" id="toast"></div>
 
+<div class="modal">
+    <div class="header">
+        <i class="fa-solid fa-xmark close-btn" onclick="history.back()"></i>
+        <div class="logo"><i class="fa-brands fa-x-twitter"></i></div>
+    </div>
+    
     <!-- Step 1: Name -->
-    <div id="step-1" class="step active">
-        <div class="input-group">
-            <label>First Name</label>
-            <input type="text" id="fname" oninput="validate(this)">
-            <span class="valid-icon">✔</span>
+    <div class="step active" id="step1">
+        <h2>Create your account</h2>
+        <div class="input-wrapper">
+            <input type="text" id="fname" placeholder="First Name">
         </div>
-        <div class="input-group">
-            <label>Last Name</label>
-            <input type="text" id="lname" oninput="validate(this)">
-            <span class="valid-icon">✔</span>
+        <div class="input-wrapper">
+            <input type="text" id="lname" placeholder="Last Name">
         </div>
-        <button class="btn-next" onclick="nextStep(2)">Next</button>
+        <button class="btn" onclick="nextStep(1)">Next</button>
     </div>
 
     <!-- Step 2: DOB & Gender -->
-    <div id="step-2" class="step">
-        <h3>Date of birth</h3>
-        <p style="color:#536471; font-size:14px; margin-bottom:15px;">This will not be shown publicly.</p>
-        <div class="dob-container">
-            <div class="input-group" style="flex:2;">
-                <label>Month</label>
-                <select id="dob-month"><option>January</option><option>February</option><option>March</option><option>April</option><option>May</option><option>June</option><option>July</option><option>August</option><option>September</option><option>October</option><option>November</option><option>December</option></select>
-            </div>
-            <div class="input-group">
-                <label>Day</label>
-                <select id="dob-day"></select>
-            </div>
-            <div class="input-group">
-                <label>Year</label>
-                <select id="dob-year"></select>
+    <div class="step" id="step2">
+        <h2>Basic Info</h2>
+        <div class="input-wrapper">
+            <label>Date of birth</label>
+            <div class="dob-group">
+                <select id="dob-month" style="flex:2"></select>
+                <select id="dob-day" style="flex:1"></select>
+                <select id="dob-year" style="flex:1"></select>
             </div>
         </div>
-        <div class="input-group">
+        <div class="input-wrapper">
             <label>Gender</label>
             <select id="gender">
                 <option value="Male">Male</option>
@@ -83,123 +64,140 @@
                 <option value="Rather not to say">Rather not to say</option>
             </select>
         </div>
-        <button class="btn-next" onclick="nextStep(3)">Next</button>
+        <button class="btn" onclick="nextStep(2)">Next</button>
     </div>
 
     <!-- Step 3: Mobile -->
-    <div id="step-3" class="step">
-        <div class="input-group">
-            <label>Phone</label>
-            <input type="tel" id="phone" oninput="validate(this)">
-            <span class="valid-icon">✔</span>
+    <div class="step" id="step3">
+        <h2>Add your phone</h2>
+        <div class="input-wrapper">
+            <input type="tel" id="mobile" placeholder="Mobile Number">
         </div>
-        <button class="btn-next" onclick="nextStep(4)">Next</button>
+        <button class="btn" onclick="nextStep(3)">Next</button>
     </div>
 
-    <!-- Step 4: Email Creation -->
-    <div id="step-4" class="step">
-        <div class="input-group">
-            <label>Email (User)</label>
-            <input type="text" id="email-prefix" placeholder="alphabets, numbers, +, -, _" oninput="validateEmailPrefix(this)">
-            <span class="valid-icon">✔</span>
+    <!-- Step 4: Email -->
+    <div class="step" id="step4">
+        <h2>Create your email</h2>
+        <div class="input-wrapper relative">
+            <input type="text" id="email-handle" placeholder="username">
+            <span class="email-suffix">@pplx.com</span>
         </div>
-        <p style="text-align:right; margin-top:-20px; margin-bottom:20px; color:#536471;">@pplx.com</p>
-        <button class="btn-next" onclick="nextStep(5)">Next</button>
+        <p style="font-size: 12px; color: #536471">Only alphabets, numbers, +, -, _ allowed. No capitals.</p>
+        <button class="btn" onclick="nextStep(4)">Next</button>
     </div>
 
     <!-- Step 5: Password -->
-    <div id="step-5" class="step">
-        <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="password" oninput="validate(this)">
-            <span class="valid-icon">✔</span>
+    <div class="step" id="step5">
+        <h2>You'll need a password</h2>
+        <div class="input-wrapper">
+            <input type="password" id="password" placeholder="Password">
         </div>
-        <button class="btn-next" onclick="finishSignup()">Sign Up</button>
+        <button class="btn" onclick="finishSignup()">Sign up</button>
     </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
-        authDomain: "xperts-metadata.firebaseapp.com",
-        projectId: "xperts-metadata",
-        storageBucket: "xperts-metadata.firebasestorage.app",
-        messagingSenderId: "514845910910",
-        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
-        measurementId: "G-CQ5KWGJSZB"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Populate Dates
-    const days = document.getElementById('dob-day');
-    for(let i=1;i<=31;i++) { let op = document.createElement('option'); op.text=i; days.add(op); }
-    const years = document.getElementById('dob-year');
-    for(let i=2024;i>=1900;i--) { let op = document.createElement('option'); op.text=i; years.add(op); }
+    // Populate DOB
+    const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const mSelect = document.getElementById('dob-month');
+    months.forEach((m, i) => mSelect.innerHTML += `<option value="${i+1}">${m}</option>`);
+    
+    const dSelect = document.getElementById('dob-day');
+    for(let i=1; i<=31; i++) dSelect.innerHTML += `<option value="${i}">${i}</option>`;
 
-    function validate(el) {
-        if(el.value.length > 0) el.parentElement.classList.add('valid');
-        else el.parentElement.classList.remove('valid');
+    const ySelect = document.getElementById('dob-year');
+    const currentYear = new Date().getFullYear();
+    for(let i=currentYear; i>=1900; i--) ySelect.innerHTML += `<option value="${i}">${i}</option>`;
+
+    let userData = {};
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.style.display = 'block';
+        setTimeout(() => t.style.display = 'none', 3000);
     }
 
-    function validateEmailPrefix(el) {
-        // Regex: Alphabets, numbers, +, -, _ only. No capitals (convert to lower).
-        el.value = el.value.toLowerCase().replace(/[^a-z0-9+_-]/g, '');
-        if(el.value.length > 0) el.parentElement.classList.add('valid');
-        else el.parentElement.classList.remove('valid');
+    async function nextStep(current) {
+        if(current === 1) {
+            const f = document.getElementById('fname').value.trim();
+            const l = document.getElementById('lname').value.trim();
+            if(!f || !l) return showToast("Name is required");
+            userData.firstName = f; userData.lastName = l;
+            changeStep(2);
+        } else if (current === 2) {
+            userData.dob = `${document.getElementById('dob-day').value}/${document.getElementById('dob-month').value}/${document.getElementById('dob-year').value}`;
+            userData.gender = document.getElementById('gender').value;
+            changeStep(3);
+        } else if (current === 3) {
+            const mob = document.getElementById('mobile').value.trim();
+            if(!mob) return showToast("Mobile is required");
+            // Check unique mobile
+            const snap = await db.collection('users').where('mobile', '==', mob).get();
+            if(!snap.empty) return showToast("Mobile number already in use");
+            userData.mobile = mob;
+            changeStep(4);
+        } else if (current === 4) {
+            let handle = document.getElementById('email-handle').value.trim();
+            if(/[A-Z]/.test(handle)) return showToast("Capital letters not allowed");
+            if(!/^[a-z0-9+_-]+$/.test(handle)) return showToast("Invalid characters");
+            
+            const email = handle + "@pplx.com";
+            // Check unique email
+            const snap = await db.collection('users').where('email', '==', email).get();
+            if(!snap.empty) return showToast("Email handle taken");
+            
+            userData.email = email;
+            changeStep(5);
+        }
     }
 
-    function nextStep(stepNum) {
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        document.getElementById('step-'+stepNum).classList.add('active');
+    function changeStep(n) {
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step${n}`).classList.add('active');
+    }
+
+    function getRandomColor() {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
     }
 
     async function finishSignup() {
-        const fname = document.getElementById('fname').value;
-        const lname = document.getElementById('lname').value;
-        const phone = document.getElementById('phone').value;
-        const emailPrefix = document.getElementById('email-prefix').value;
-        const fullEmail = emailPrefix + "@pplx.com";
-        const password = document.getElementById('password').value;
-        
-        const dob = `${document.getElementById('dob-month').value} ${document.getElementById('dob-day').value}, ${document.getElementById('dob-year').value}`;
-        const gender = document.getElementById('gender').value;
+        const pass = document.getElementById('password').value;
+        if(!pass) return showToast("Password required");
+        userData.password = pass;
+        userData.profileColor = getRandomColor();
 
         try {
-            // Check if email taken
-            const check = await db.collection('users').where('email', '==', fullEmail).get();
-            if(!check.empty) {
-                alert("Email already exists. Please choose another.");
-                nextStep(4);
-                return;
-            }
-
-            const userData = {
-                firstName: fname,
-                lastName: lname,
-                dob: dob,
-                gender: gender,
-                phone: phone,
-                email: fullEmail,
-                password: password // In real app, hash this!
-            };
-
             await db.collection('users').add(userData);
-
-            // Save session
-            localStorage.setItem('x_user_session', JSON.stringify(userData));
             
-            // Add to accounts list
-            let accounts = JSON.parse(localStorage.getItem('x_accounts') || "[]");
-            accounts.push(userData);
-            localStorage.setItem('x_accounts', JSON.stringify(accounts));
+            // Auto Login
+            const session = {
+                email: userData.email,
+                name: userData.firstName + ' ' + userData.lastName,
+                dpColor: userData.profileColor,
+                loginTime: new Date().toISOString()
+            };
+            
+            let list = JSON.parse(localStorage.getItem('x_users_list') || '[]');
+            list.push(session);
+            localStorage.setItem('x_users_list', JSON.stringify(list));
+            localStorage.setItem('x_current_user', JSON.stringify(session));
 
-            alert("Account created successfully!");
-            window.location.href = "1.html"; 
-
-        } catch(e) {
-            console.error(e);
-            alert("Error creating account.");
+            window.location.href = "https://abc.xyz";
+        } catch (e) {
+            showToast("Error creating account: " + e.message);
         }
     }
 </script>

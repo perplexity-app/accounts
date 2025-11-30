@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Security Code</title>
+    <style>
+        body { background: #000; color: #fff; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: monospace; }
+        .code { font-size: 60px; letter-spacing: 10px; font-weight: bold; border: 2px dashed #333; padding: 20px; }
+        .info { margin-top: 20px; color: #aaa; }
+    </style>
+</head>
+<body>
+    <div class="code" id="code-display">LOADING</div>
+    <div class="info">This code is valid for 5 minutes</div>
+
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
+<script>
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const email = urlParams.get('email');
+
+    function generateCode() {
+        return Math.floor(100000 + Math.random() * 900000).toString();
+    }
+
+    async function init() {
+        if(!email) {
+            document.getElementById('code-display').innerText = "NO EMAIL";
+            return;
+        }
+
+        const otp = generateCode();
+        const snap = await db.collection('users').where('email', '==', email).get();
+        
+        if(!snap.empty) {
+            const docId = snap.docs[0].id;
+            await db.collection('users').doc(docId).update({
+                otp: otp,
+                otpTimestamp: Date.now()
+            });
+            document.getElementById('code-display').innerText = otp;
+        } else {
+            document.getElementById('code-display').innerText = "USER 404";
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

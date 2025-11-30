@@ -2,85 +2,59 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Reset Password</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <title>Enter Code</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; }
-        .container { width: 100%; max-width: 500px; padding: 20px; }
-        h1 { font-size: 24px; font-weight: bold; margin-bottom: 20px; }
-        .input-group { border: 1px solid #cfd9de; padding: 10px; border-radius: 4px; margin-bottom: 20px; }
-        .input-group input { width: 100%; border: none; outline: none; font-size: 16px; }
-        .btn { width: 100%; height: 50px; background: #000; color: #fff; border-radius: 25px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
+        body { font-family: -apple-system, sans-serif; display: flex; justify-content: center; height: 100vh; align-items: center; margin: 0; }
+        .container { width: 400px; padding: 20px; }
+        .logo { font-size: 30px; margin-bottom: 20px; }
+        .input-box { width: 100%; padding: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; letter-spacing: 5px; font-size: 20px; text-align: center; }
+        .btn { width: 100%; padding: 15px; background: #000; color: #fff; border-radius: 25px; border: none; cursor: pointer; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <div style="font-size:30px; font-weight:bold; margin-bottom:20px;">X</div>
-    <h1>Reset your password</h1>
-    <p style="color:#536471" id="user-info">Enter a new password for your account.</p>
-    
-    <div class="input-group">
-        <input type="password" id="new-password" placeholder="New Password">
+    <div class="container">
+        <i class="fa-brands fa-x-twitter logo"></i>
+        <h1>We sent you a code</h1>
+        <p>Check your other logged-in devices to get the confirmation code.</p>
+        <p style="font-size: 13px; color: #666">Check 6.html?email=... to see the code</p>
+        
+        <input type="text" id="otp-input" class="input-box" placeholder="XXXXXX" maxlength="6">
+        <button class="btn" onclick="verifyCode()">Next</button>
+        <p id="msg" style="color:red; text-align:center; display:none"></p>
     </div>
-    
-    <button class="btn" onclick="resetPassword()">Reset Password</button>
-</div>
 
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-firestore.js"></script>
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
-        authDomain: "xperts-metadata.firebaseapp.com",
-        projectId: "xperts-metadata",
-        storageBucket: "xperts-metadata.firebasestorage.app",
-        messagingSenderId: "514845910910",
-        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
-        measurementId: "G-CQ5KWGJSZB"
-    };
+    const firebaseConfig = { apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw", authDomain: "xperts-metadata.firebaseapp.com", projectId: "xperts-metadata", storageBucket: "xperts-metadata.firebasestorage.app", messagingSenderId: "514845910910", appId: "1:514845910910:web:5a2402130a97b5d749b52f", measurementId: "G-CQ5KWGJSZB" };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
     const urlParams = new URLSearchParams(window.location.search);
-    // Note: Prompt said 1.html redirects like 5.html?email?=<email> (double question mark typo in prompt, handling standard query)
-    // We will look for 'email' param.
-    let email = urlParams.get('email');
-    
-    // Handle the "?email?=<email>" format if browser parsed it oddly or if passed strictly as string
-    if(!email && window.location.href.includes('?email?=')) {
-        email = window.location.href.split('?email?=')[1];
-    }
+    const email = urlParams.get('email');
 
-    if(email) {
-        document.getElementById('user-info').innerText = `Enter a new password for ${email}`;
-    } else {
-        alert("No email provided");
-    }
-
-    async function resetPassword() {
-        const newPass = document.getElementById('new-password').value;
-        if(!newPass) return alert("Enter a password");
+    async function verifyCode() {
+        const entered = document.getElementById('otp-input').value;
+        const msg = document.getElementById('msg');
         
-        try {
-            const snapshot = await db.collection('users').where('email', '==', email).get();
-            if(snapshot.empty) {
-                alert("User not found");
-                return;
-            }
-            
-            // Update the doc
-            const docId = snapshot.docs[0].id;
-            await db.collection('users').doc(docId).update({
-                password: newPass
-            });
-            
-            alert("Password updated! Redirecting to login.");
+        if(!email) { msg.innerText = "No email provided"; msg.style.display = 'block'; return; }
+
+        const snap = await db.collection('users').where('email', '==', email).get();
+        if(snap.empty) { msg.innerText = "User not found"; msg.style.display = 'block'; return; }
+
+        const data = snap.docs[0].data();
+        const now = Date.now();
+        
+        // Validate OTP and Time (5 mins = 300000 ms)
+        if (data.otp === entered && (now - data.otpTimestamp) < 300000) {
+            // Success - Redirect to login or auto-login
+            // For this flow, we go back to login with pre-filled email
+            alert("Verified! You can now login (In real app, reset password here).");
             window.location.href = `1.html?email=${email}`;
-            
-        } catch(e) {
-            console.error(e);
-            alert("Error updating password");
+        } else {
+            msg.innerText = "Invalid or expired code"; 
+            msg.style.display = 'block';
         }
     }
 </script>

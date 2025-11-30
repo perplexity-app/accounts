@@ -2,91 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Accounts</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Switch Account</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #00000066; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .modal { background: white; width: 300px; padding: 20px; border-radius: 16px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        .header { text-align: center; margin-bottom: 20px; font-weight: bold; font-size: 20px; }
-        .x-logo { font-size: 30px; margin-bottom: 10px; display: block; text-align: center;}
-        
-        .account-item { display: flex; align-items: center; padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
-        .account-item:hover { background-color: #f7f9f9; }
-        .avatar { width: 40px; height: 40px; background-color: #ccc; border-radius: 50%; margin-right: 10px; display: flex; justify-content: center; align-items: center; color: white; font-weight: bold; }
+        body { font-family: sans-serif; display: flex; justify-content: center; background: #00000066; height: 100vh; align-items: center; margin: 0; }
+        .modal { background: white; width: 300px; padding: 20px; border-radius: 16px; box-shadow: 0 0 10px rgba(0,0,0,0.2); }
+        .logo { text-align: center; margin-bottom: 20px; font-size: 24px; }
+        .account-item { display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; }
+        .account-item:hover { background: #f7f9f9; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
         .info { display: flex; flex-direction: column; }
-        .name { font-weight: bold; font-size: 15px; }
-        .handle { color: #536471; font-size: 14px; }
-        
-        .options { margin-top: 15px; }
-        .opt-link { display: block; padding: 10px; text-decoration: none; color: #0f1419; font-size: 15px; }
-        .opt-link:hover { background-color: #f7f9f9; border-radius: 4px; }
+        .name { font-weight: bold; font-size: 14px; }
+        .handle { color: #536471; font-size: 13px; }
+        .add-link { display: block; text-align: center; margin-top: 15px; color: #1d9bf0; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
-
-<div class="modal">
-    <div class="x-logo">X</div>
-    <div class="header">Accounts</div>
-    <div id="accounts-list"></div>
-    
-    <div class="options">
-        <a href="1.html?type=another-login" class="opt-link">Add an existing account</a>
-        <a href="2.html" class="opt-link">Create a new account</a>
+    <div class="modal">
+        <div class="logo"><i class="fa-brands fa-x-twitter"></i></div>
+        <h3 style="text-align:center; margin-top:0">Accounts</h3>
+        <div id="account-list"></div>
+        <a href="1.html?type=another-login" class="add-link">Add an existing account</a>
     </div>
-</div>
 
-<script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const redirectKey = urlParams.get('key'); // Target URL logic
+    <script>
+        const list = JSON.parse(localStorage.getItem('x_users_list') || '[]');
+        const container = document.getElementById('account-list');
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectKey = urlParams.get('key'); // target url if needed
 
-    const accounts = JSON.parse(localStorage.getItem('x_accounts') || "[]");
-    const list = document.getElementById('accounts-list');
-
-    if(accounts.length === 0) {
-        list.innerHTML = "<p style='text-align:center;color:#536471'>No logged in accounts</p>";
-    } else {
-        accounts.forEach((acc, index) => {
-            const item = document.createElement('div');
-            item.className = 'account-item';
-            
-            // Generate Avatar Letter
-            const initial = acc.firstName ? acc.firstName.charAt(0).toUpperCase() : "U";
-            
-            item.innerHTML = `
-                <div class="avatar" style="background-color:${getRandomColor()}">${initial}</div>
+        list.forEach((user, index) => {
+            const div = document.createElement('div');
+            div.className = 'account-item';
+            div.innerHTML = `
+                <div class="avatar" style="background-color: ${user.dpColor}">${user.name.charAt(0)}</div>
                 <div class="info">
-                    <span class="name">${acc.firstName} ${acc.lastName}</span>
-                    <span class="handle">${acc.email}</span>
+                    <span class="name">${user.name}</span>
+                    <span class="handle">${user.email}</span>
                 </div>
             `;
-            
-            item.onclick = function() {
-                // Switch session
-                localStorage.setItem('x_user_session', JSON.stringify(acc));
-                
-                if(redirectKey) {
-                    // Specific requirement: redirect like key/u/<account_no>
-                    // Assuming 'key' is a base domain or path. If key is full URL, we append.
-                    // Let's assume logic: redirectKey + "/u/" + (index + 1)
-                    // If key is 'example.com', it becomes example.com/u/1
-                    
-                    // Simple logic validation for valid URL structure
-                    let target = redirectKey;
-                    if(!target.endsWith('/')) target += '/';
-                    window.location.href = target + "u/" + (index + 1);
-                } else {
-                    window.location.href = "https://abc.xyz";
-                }
-            };
-            
-            list.appendChild(item);
+            div.onclick = () => switchAccount(user, index + 1);
+            container.appendChild(div);
         });
-    }
 
-    function getRandomColor() {
-        const colors = ['#1d9bf0', '#00ba7c', '#ffd400', '#f91880', '#7856ff'];
-        return colors[Math.floor(Math.random() * colors.length)];
-    }
-</script>
+        function switchAccount(user, id) {
+            localStorage.setItem('x_current_user', JSON.stringify(user));
+            // Redirect based on prompt requirement
+            // "/u/<account_no>" isn't a real file, so assuming redirect to main
+            window.location.href = redirectKey ? redirectKey : "https://abc.xyz";
+        }
+    </script>
 </body>
 </html>
