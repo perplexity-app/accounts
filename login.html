@@ -1,172 +1,135 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login / X</title>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <title>Inbox</title>
+    <!-- Material Icons for Gmail look -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #fff;
-            margin: 0;
+        body { font-family: Roboto, Arial, sans-serif; margin: 0; background-color: #f6f8fc; height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Header */
+        header { background: white; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e0e0e0; }
+        .logo { font-size: 22px; color: #ea4335; font-weight: bold; display: flex; align-items: center; }
+        .user-info { display: flex; align-items: center; }
+        .user-pfp { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; margin-left: 10px; border: 1px solid #ccc; }
+        
+        /* Main Content Area */
+        #app-content { flex: 1; overflow-y: auto; position: relative; padding: 10px; }
+
+        /* Inbox List Styles */
+        .email-item {
+            background: white;
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
             display: flex;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
-            color: #0f1419;
-        }
-        .container {
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
-            text-align: center;
-        }
-        .logo {
-            width: 30px;
-            margin-bottom: 20px;
-        }
-        h1 {
-            font-size: 31px;
-            margin-bottom: 30px;
-            text-align: left;
-            font-weight: 700;
-        }
-        .input-wrapper {
-            position: relative;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        input {
-            width: 100%;
-            padding: 16px 12px;
-            border: 1px solid #cfd9de;
-            border-radius: 4px;
-            font-size: 17px;
-            box-sizing: border-box;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        input:focus {
-            border-color: #1d9bf0;
-            border-width: 2px;
-            padding: 15px 11px;
-        }
-        .btn-black {
-            background-color: #0f1419;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            font-size: 17px;
-            font-weight: 700;
-            width: 100%;
-            padding: 12px;
             cursor: pointer;
-            margin-top: 10px;
+            transition: background 0.2s;
+            user-select: none; /* Prevent text selection on long press */
+            border-radius: 8px;
+            margin-bottom: 5px;
         }
-        .btn-black:disabled { opacity: 0.5; }
-        .btn-white {
+        .email-item:hover { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .email-avatar { width: 40px; height: 40px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 15px; color: #555; font-weight: bold;}
+        .email-details { flex: 1; overflow: hidden; }
+        .sender { font-weight: bold; color: #202124; font-size: 15px; }
+        .subject { font-weight: 500; color: #202124; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .snippet { color: #5f6368; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .time { font-size: 12px; color: #5f6368; margin-left: 10px; }
+        .star-icon { color: #ccc; margin-right: 10px; }
+        .star-icon.active { color: #f4b400; }
+
+        /* Compose Button */
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
             background-color: white;
-            color: #0f1419;
-            border: 1px solid #cfd9de;
-            border-radius: 50px;
-            font-size: 17px;
-            font-weight: 700;
-            width: 100%;
-            padding: 12px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        .hidden { display: none; }
-        .error { color: red; font-size: 13px; margin-top: 5px; text-align: left; display: none; }
-        .divider {
+            color: #ea4335;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             display: flex;
             align-items: center;
-            margin: 20px 0;
-        }
-        .divider::before, .divider::after {
-            content: "";
-            flex: 1;
-            border-bottom: 1px solid #eff3f4;
-        }
-        .divider span {
-            padding: 0 10px;
-            color: #0f1419;
-        }
-        .toggle-link {
-            color: #1d9bf0;
-            font-size: 14px;
+            justify-content: center;
+            font-size: 30px;
             cursor: pointer;
-            margin-top: 15px;
-            display: inline-block;
-            text-decoration: underline;
+            z-index: 100;
         }
+        .fab:hover { background-color: #fce8e6; }
+
+        /* Compose Form */
+        .compose-container { background: white; height: 100%; border-radius: 8px; display: flex; flex-direction: column; }
+        .compose-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; background: #202124; color: white; border-radius: 8px 8px 0 0;}
+        .compose-body { padding: 20px; flex: 1; display: flex; flex-direction: column; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 12px; color: #5f6368; margin-bottom: 5px; }
+        .input-field { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        textarea.input-field { flex: 1; resize: none; height: 200px; }
+        .send-btn { background: #1a73e8; color: white; border: none; padding: 10px 25px; border-radius: 18px; cursor: pointer; font-weight: bold; align-self: flex-start; }
+
+        /* Read View */
+        .read-view { background: white; padding: 20px; border-radius: 8px; min-height: 80%; }
+        .read-header { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .read-subject { font-size: 22px; margin: 0 0 10px 0; }
+        .read-meta { color: #555; font-size: 14px; display: flex; justify-content: space-between; }
+        .read-body { font-size: 16px; line-height: 1.5; color: #222; margin-top: 20px; }
+
+        /* Context Menu (Long Press) */
+        #context-menu {
+            display: none;
+            position: fixed;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            width: 200px;
+        }
+        .menu-item { padding: 12px 20px; cursor: pointer; display: flex; align-items: center; }
+        .menu-item:hover { background-color: #eee; }
+        .menu-item i { margin-right: 10px; color: #5f6368; }
+
+        /* Overlay */
+        #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; z-index: 999; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <svg viewBox="0 0 24 24" class="logo"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
-
-    <!-- Stage 1: Identification -->
-    <div id="stage1">
-        <h1>Sign in to X</h1>
-        <div class="input-wrapper">
-            <input type="text" id="identifier" placeholder="Phone, email, or username">
-            <div class="error" id="identError"></div>
-        </div>
-        <button class="btn-black" id="btnNext" onclick="handleIdentifier()">Next</button>
-        <button class="btn-white" onclick="location.href='2.html'">Forgot password?</button>
-        
-        <div class="divider">
-            <span>or</span>
-        </div>
-        <p style="font-size:14px">Don't have an account? <a href="2.html" style="color:#1d9bf0;text-decoration:none">Sign up</a></p>
+<header>
+    <div class="logo">
+        <i class="material-icons" style="margin-right: 8px;">mail</i> Mail
     </div>
-
-    <!-- Stage 2: Password (For Phone / IgniteID) -->
-    <div id="stagePassword" class="hidden">
-        <h1>Enter your password</h1>
-        <div class="input-wrapper">
-            <input type="text" id="dispUser" disabled style="background:#f7f9f9; color:#536471; border:none; margin-bottom:10px;">
-            <input type="password" id="password" placeholder="Password">
-            <div class="error" id="passError"></div>
-        </div>
-        <button class="btn-black" onclick="verifyPassword()">Log in</button>
-        
-        <!-- Option to use OTP if the identified user actually has an email linked (advanced) 
-             but specifically requested to switch options if applicable -->
-        <div id="optSwitchToOtp" class="hidden">
-            <span class="toggle-link" onclick="switchToOtpFlow()">Login with Email OTP instead</span>
-        </div>
+    <div class="user-info">
+        <span id="user-name">Loading...</span>
+        <img id="header-pfp" src="" class="user-pfp" alt="PFP">
+        <button onclick="logout()" style="margin-left:10px; border:none; background:none; cursor:pointer; color:#1a73e8;">Logout</button>
     </div>
+</header>
 
-    <!-- Stage 3: OTP (For Email) -->
-    <div id="stageOtp" class="hidden">
-        <h1>We sent you a code</h1>
-        <p style="font-size:14px; color:#536471; text-align:left;">Enter the code sent to <span id="otpEmailDisp"></span></p>
-        <div class="input-wrapper">
-            <input type="text" id="otpInput" placeholder="Enter code">
-            <div class="error" id="otpError"></div>
-        </div>
-        <button class="btn-black" onclick="verifyOtp()">Next</button>
-        
-        <div id="optSwitchToPass" class="hidden">
-            <span class="toggle-link" onclick="switchToPassFlow()">Login with Password instead</span>
-        </div>
-    </div>
+<div id="app-content">
+    <!-- Content injected via JS -->
 </div>
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+<!-- Floating Action Button for Compose -->
+<div id="fab-btn" class="fab" onclick="goToCompose()">+</div>
 
-    // Initialize EmailJS
-    (function(){
-        emailjs.init("Yr9MutUoHOEONnFgn"); // Public Key
-    })();
+<!-- Context Menu Elements -->
+<div id="overlay" onclick="hideContextMenu()"></div>
+<div id="context-menu">
+    <div class="menu-item" onclick="deleteEmail()"><i class="material-icons">delete</i> Delete</div>
+    <div class="menu-item" onclick="starEmail()"><i class="material-icons">star</i> Star / Unstar</div>
+    <div class="menu-item" onclick="labelEmail()"><i class="material-icons">label</i> Create Label</div>
+</div>
 
+<!-- Firebase Scripts -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+<script>
     const firebaseConfig = {
         apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
         authDomain: "xperts-metadata.firebaseapp.com",
@@ -177,157 +140,282 @@
         measurementId: "G-CQ5KWGJSZB"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    // State
-    let currentUserDoc = null;
-    let generatedOtp = null;
+    let currentUser = null;
+    let selectedEmailId = null; // For context menu action
 
-    // --- Step 1: Identifier Check ---
-    window.handleIdentifier = async () => {
-        const btn = document.getElementById('btnNext');
-        const err = document.getElementById('identError');
-        const input = document.getElementById('identifier').value.trim();
-        
-        if(!input) return;
-
-        btn.textContent = "Searching...";
-        btn.disabled = true;
-        err.style.display = 'none';
-
-        try {
-            let q;
-            let type = "unknown";
-            
-            // Determine query logic
-            if(input.includes('@') && !input.endsWith('@ignite.com')) {
-                // Standard Email
-                q = query(collection(db, "users"), where("contact", "==", input));
-                type = "email";
-            } else if (input.endsWith('@ignite.com')) {
-                // Ignite ID
-                q = query(collection(db, "users"), where("igniteId", "==", input));
-                type = "ignite";
-            } else if (/^\d{10}$/.test(input)) {
-                // Mobile
-                q = query(collection(db, "users"), where("contact", "==", input));
-                type = "phone";
-            } else {
-                // Fallback: search Ignite ID just in case user didn't type @ignite.com
-                q = query(collection(db, "users"), where("igniteId", "==", input + "@ignite.com"));
-            }
-
-            const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                err.textContent = "Sorry, we could not find your account.";
-                err.style.display = 'block';
-                btn.disabled = false;
-                btn.textContent = "Next";
-                return;
-            }
-
-            // User found
-            currentUserDoc = querySnapshot.docs[0].data();
-            currentUserDoc.id = querySnapshot.docs[0].id; // Store Doc ID if needed
-
-            // Logic flow based on prompt
-            document.getElementById('stage1').classList.add('hidden');
-            
-            // If user used Email -> Send OTP
-            // If user used Mobile or Ignite ID -> Ask Password
-            // But check what the actual data type is in DB for robustness
-
-            if(type === "email" || (currentUserDoc.contactType === "email" && input === currentUserDoc.contact)) {
-                sendOtpAndShow(currentUserDoc.contact);
-                // Enable switch to password if they want
-                document.getElementById('optSwitchToPass').classList.remove('hidden');
-            } else {
-                // Phone or Ignite ID flow
-                showPasswordStage();
-                // Enable switch to OTP if they have an email contact (optional feature based on prompt hint)
-                if(currentUserDoc.contactType === 'email') {
-                     document.getElementById('optSwitchToOtp').classList.remove('hidden');
-                }
-            }
-
-        } catch (e) {
-            console.error(e);
-            alert("Connection error");
-            btn.disabled = false;
-            btn.textContent = "Next";
+    // Auth State Observer
+    auth.onAuthStateChanged(user => {
+        if (!user) {
+            window.location.href = "login.html";
+        } else {
+            currentUser = user;
+            loadUserProfile();
+            router();
         }
-    };
+    });
 
-    // --- Logic: Show Password ---
-    function showPasswordStage() {
-        document.getElementById('stagePassword').classList.remove('hidden');
-        document.getElementById('stageOtp').classList.add('hidden');
-        document.getElementById('dispUser').value = currentUserDoc.igniteId || currentUserDoc.contact;
-    }
-
-    // --- Logic: Send OTP ---
-    function sendOtpAndShow(email) {
-        document.getElementById('stageOtp').classList.remove('hidden');
-        document.getElementById('stagePassword').classList.add('hidden');
-        document.getElementById('otpEmailDisp').innerText = email;
-
-        generatedOtp = Math.floor(100000 + Math.random() * 900000); // 6 digit
-
-        // Send via EmailJS
-        emailjs.send("service_ijwq7ob", "template_l9yg71m", {
-            to_email: email,
-            otp: generatedOtp
-        }).then(function(response) {
-            console.log('OTP Sent!', response.status, response.text);
-            // alert("OTP Sent: " + generatedOtp); // Uncomment for debugging if EmailJS quota full
-        }, function(error) {
-            console.log('FAILED...', error);
-            alert("Failed to send OTP. Check console.");
+    function loadUserProfile() {
+        db.collection('users').doc(currentUser.email).get().then(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                document.getElementById('user-name').innerText = data.name;
+                document.getElementById('header-pfp').src = data.pfp || "https://via.placeholder.com/150";
+            }
         });
     }
 
-    // --- Verify Password ---
-    window.verifyPassword = () => {
-        const inputPass = document.getElementById('password').value;
-        const err = document.getElementById('passError');
+    function logout() {
+        auth.signOut().then(() => window.location.href = "login.html");
+    }
+
+    // --- Router Logic ---
+    function router() {
+        const params = new URLSearchParams(window.location.search);
+        const view = params.get('v'); // Using 'v' instead of '1' for clarity, but matches logic
+        const contentDiv = document.getElementById('app-content');
+        const fab = document.getElementById('fab-btn');
+
+        contentDiv.innerHTML = ''; // Clear content
+
+        if (view === 'compose') {
+            fab.style.display = 'none';
+            renderCompose(contentDiv);
+        } else if (view === 'read') {
+            fab.style.display = 'none';
+            const mailId = params.get('id');
+            renderRead(contentDiv, mailId);
+        } else {
+            // Default: Inbox (view=inbox or empty)
+            fab.style.display = 'flex';
+            renderInbox(contentDiv);
+        }
+    }
+
+    function goToCompose() {
+        window.location.search = '?v=compose';
+    }
+
+    // --- Render Functions ---
+
+    // 1. Inbox View
+    function renderInbox(container) {
+        container.innerHTML = '<h3>Inbox</h3><div id="email-list">Loading...</div>';
         
-        if(inputPass === currentUserDoc.password) {
-            // Success
-            window.location.href = "https://abc.xyz";
-        } else {
-            err.textContent = "Wrong password.";
-            err.style.display = 'block';
+        db.collection('emails')
+            .where('to', '==', currentUser.email)
+            .orderBy('timestamp', 'desc')
+            .onSnapshot(snapshot => {
+                const list = document.getElementById('email-list');
+                list.innerHTML = '';
+                if (snapshot.empty) {
+                    list.innerHTML = '<p style="text-align:center; margin-top:20px; color:#777;">No emails found.</p>';
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const el = document.createElement('div');
+                    el.className = 'email-item';
+                    
+                    // Long press logic
+                    addLongPressListener(el, doc.id);
+
+                    // Click logic
+                    el.onclick = (e) => {
+                        // Prevent click if just finished long press
+                        if(el.dataset.longPressed === "true") {
+                            el.dataset.longPressed = "false";
+                            return;
+                        }
+                        window.location.search = `?v=read&id=${doc.id}`;
+                    };
+
+                    const date = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : '';
+                    const starClass = data.isStarred ? 'active' : '';
+
+                    el.innerHTML = `
+                        <div class="email-avatar">${data.from.charAt(0).toUpperCase()}</div>
+                        <div class="email-details">
+                            <div style="display:flex; justify-content:space-between;">
+                                <span class="sender">${data.from}</span>
+                                <span class="time">${date}</span>
+                            </div>
+                            <div class="subject">
+                                <i class="material-icons star-icon ${starClass}" style="font-size:16px; vertical-align:middle;">star</i>
+                                ${data.subject}
+                                ${data.label ? `<span style="background:#ddd; padding:2px 6px; font-size:10px; border-radius:4px;">${data.label}</span>` : ''}
+                            </div>
+                            <div class="snippet">${data.body}</div>
+                        </div>
+                    `;
+                    list.appendChild(el);
+                });
+            });
+    }
+
+    // 2. Compose View
+    function renderCompose(container) {
+        const html = `
+            <div class="compose-container">
+                <div class="compose-header">
+                    <span>New Message</span>
+                    <i class="material-icons" onclick="window.history.back()" style="cursor:pointer;">close</i>
+                </div>
+                <div class="compose-body">
+                    <div class="input-group">
+                        <label>From</label>
+                        <input type="text" class="input-field" value="${currentUser.email}" disabled style="background:#f0f0f0;">
+                    </div>
+                    <div class="input-group">
+                        <label>To</label>
+                        <input type="email" id="comp-to" class="input-field" placeholder="Recipient Email">
+                    </div>
+                    <div class="input-group">
+                        <label>Subject</label>
+                        <input type="text" id="comp-sub" class="input-field" placeholder="Subject">
+                    </div>
+                    <textarea id="comp-body" class="input-field" placeholder="Compose email"></textarea>
+                    <button class="send-btn" onclick="sendEmail()">Send <i class="material-icons" style="font-size:16px; vertical-align:middle;">send</i></button>
+                </div>
+            </div>
+        `;
+        container.innerHTML = html;
+    }
+
+    // 3. Read View
+    function renderRead(container, id) {
+        db.collection('emails').doc(id).get().then(doc => {
+            if(!doc.exists) {
+                container.innerHTML = "<p>Email not found.</p>";
+                return;
+            }
+            const data = doc.data();
+            const date = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleString() : '';
+            
+            const html = `
+                <div class="read-view">
+                    <div class="read-header">
+                        <button onclick="window.history.back()" style="border:none; background:none; cursor:pointer; margin-bottom:10px;"><i class="material-icons">arrow_back</i></button>
+                        <h2 class="read-subject">${data.subject}</h2>
+                        <div class="read-meta">
+                            <span style="font-weight:bold; color:#1a73e8;">${data.from}</span>
+                            <span>${date}</span>
+                        </div>
+                        <div style="font-size:12px; color:#777;">to me</div>
+                    </div>
+                    <div class="read-body">
+                        ${data.body.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            `;
+            container.innerHTML = html;
+        });
+    }
+
+    // --- Action Logic ---
+
+    function sendEmail() {
+        const to = document.getElementById('comp-to').value;
+        const sub = document.getElementById('comp-sub').value;
+        const body = document.getElementById('comp-body').value;
+
+        if(!to || !sub || !body) return alert("Please fill all fields");
+
+        db.collection('emails').add({
+            from: currentUser.email,
+            to: to,
+            subject: sub,
+            body: body,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            isStarred: false,
+            label: ""
+        }).then(() => {
+            alert("Sent!");
+            window.location.search = "?v=inbox";
+        }).catch(err => alert("Error sending: " + err.message));
+    }
+
+    // --- Long Press / Context Menu Logic ---
+    let longPressTimer;
+
+    function addLongPressListener(element, id) {
+        element.addEventListener('touchstart', handleStart, {passive: false});
+        element.addEventListener('touchend', handleEnd);
+        element.addEventListener('mousedown', handleStart);
+        element.addEventListener('mouseup', handleEnd);
+        element.addEventListener('mouseleave', handleEnd); // Cancel if mouse leaves
+
+        function handleStart(e) {
+            // Don't block scrolling immediately, just start timer
+            selectedEmailId = id;
+            longPressTimer = setTimeout(() => {
+                showContextMenu(e, element);
+                element.dataset.longPressed = "true";
+                if(e.type === 'touchstart') e.preventDefault(); // Stop standard menu on mobile
+            }, 600); // 600ms long press
         }
-    };
 
-    // --- Verify OTP ---
-    window.verifyOtp = () => {
-        const inputOtp = document.getElementById('otpInput').value;
-        const err = document.getElementById('otpError');
-
-        if(parseInt(inputOtp) === generatedOtp) {
-            window.location.href = "https://abc.xyz";
-        } else {
-            err.textContent = "Incorrect code.";
-            err.style.display = 'block';
+        function handleEnd(e) {
+            clearTimeout(longPressTimer);
         }
-    };
+    }
 
-    // --- Switching Options ---
-    window.switchToOtpFlow = () => {
-        if(currentUserDoc.contactType === 'email') {
-            sendOtpAndShow(currentUserDoc.contact);
+    function showContextMenu(e, element) {
+        const menu = document.getElementById('context-menu');
+        const overlay = document.getElementById('overlay');
+        
+        let x, y;
+        if(e.touches && e.touches[0]) {
+            x = e.touches[0].clientX;
+            y = e.touches[0].clientY;
         } else {
-            alert("No email linked to this account to send OTP.");
+            x = e.clientX;
+            y = e.clientY;
         }
-    };
 
-    window.switchToPassFlow = () => {
-        showPasswordStage();
-    };
+        menu.style.display = 'block';
+        menu.style.top = y + 'px';
+        menu.style.left = x + 'px';
+        overlay.style.display = 'block';
+        
+        // Vibrate for feedback (mobile)
+        if(navigator.vibrate) navigator.vibrate(50);
+    }
+
+    function hideContextMenu() {
+        document.getElementById('context-menu').style.display = 'none';
+        document.getElementById('overlay').style.display = 'none';
+    }
+
+    function deleteEmail() {
+        if(confirm("Delete this email?")) {
+            db.collection('emails').doc(selectedEmailId).delete();
+        }
+        hideContextMenu();
+    }
+
+    function starEmail() {
+        const ref = db.collection('emails').doc(selectedEmailId);
+        ref.get().then(doc => {
+            const current = doc.data().isStarred;
+            ref.update({ isStarred: !current });
+        });
+        hideContextMenu();
+    }
+
+    function labelEmail() {
+        const label = prompt("Enter new label name:");
+        if(label) {
+            db.collection('emails').doc(selectedEmailId).update({ label: label });
+        }
+        hideContextMenu();
+    }
 
 </script>
+
 </body>
 </html>
