@@ -3,68 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in to X</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <title>Email App - Login</title>
     <style>
-        :root { --primary: #000; --gray: #536471; --border: #cfd9de; --light-bg: #fff; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: white; color: var(--primary); }
-        .container { width: 100%; max-width: 600px; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
-        .logo { width: 30px; height: 30px; margin-bottom: 30px; }
-        h1 { font-size: 31px; font-weight: 700; margin-bottom: 30px; align-self: flex-start; }
-        .input-group { position: relative; width: 100%; margin-bottom: 20px; }
-        .input-group input { width: 100%; height: 56px; padding: 20px 10px 8px; font-size: 17px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; outline: none; transition: 0.2s; }
-        .input-group input:focus { border-color: #1d9bf0; ring: 2px solid #1d9bf0; }
-        .input-group label { position: absolute; top: 18px; left: 10px; color: var(--gray); font-size: 17px; transition: 0.2s; pointer-events: none; }
-        .input-group input:focus + label, .input-group input:not(:placeholder-shown) + label { top: 6px; font-size: 12px; color: #1d9bf0; }
-        .btn-black { background-color: #0f1419; color: white; border: none; border-radius: 9999px; height: 50px; width: 100%; font-size: 17px; font-weight: 700; cursor: pointer; margin-top: 10px; transition: 0.2s; }
-        .btn-black:disabled { opacity: 0.5; cursor: default; }
-        .btn-white { background-color: white; color: black; border: 1px solid var(--border); border-radius: 9999px; height: 40px; width: auto; padding: 0 20px; font-weight: 600; cursor: pointer; margin-top: 20px; }
-        .links { margin-top: 20px; display: flex; gap: 10px; font-size: 14px; color: var(--gray); }
-        .links a { color: var(--primary); text-decoration: none; }
-        .links a:hover { text-decoration: underline; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+        }
+        h2 { color: #333; margin-bottom: 20px; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover { background: #1557b0; }
+        .switch-btn {
+            background: none;
+            color: #1a73e8;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        .switch-btn:hover { background: none; text-decoration: underline; }
         .hidden { display: none; }
-        .error { color: #f4212e; font-size: 14px; margin-top: -15px; margin-bottom: 10px; text-align: left; width: 100%; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <svg class="logo" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></svg>
-    
-    <h1 id="pageTitle">Sign in to X</h1>
-
-    <!-- Step 1: Identifier -->
-    <div id="step1" style="width: 100%;">
-        <div class="input-group">
-            <input type="text" id="identifier" placeholder=" " autocomplete="off">
-            <label>Phone, email, or username</label>
-        </div>
-        <div class="error" id="error1"></div>
-        <button class="btn-black" onclick="checkIdentifier()">Next</button>
-        <button class="btn-white" onclick="window.location.href='4.html'">Forgot password?</button>
-        <div class="links">
-            <span>Don't have an account?</span> <a href="2.html">Sign up</a>
-        </div>
+    <div id="login-form">
+        <h2>Login</h2>
+        <input type="email" id="login-email" placeholder="Email ID">
+        <input type="password" id="login-pass" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <button class="switch-btn" onclick="toggleView()">Create an account</button>
     </div>
 
-    <!-- Step 2: Password -->
-    <div id="step2" class="hidden" style="width: 100%;">
-        <div class="input-group">
-            <input type="text" id="lockedEmail" disabled style="background: #f7f9f9; color: #536471;">
-            <label>Email</label>
-        </div>
-        <div class="input-group">
-            <input type="password" id="password" placeholder=" ">
-            <label>Password</label>
-        </div>
-        <div class="error" id="error2"></div>
-        <button class="btn-black" onclick="login()">Log in</button>
-        <div class="links">
-            <a href="#" id="forgotPassLink">Forgot password?</a>
-        </div>
+    <div id="signup-form" class="hidden">
+        <h2>Sign Up</h2>
+        <input type="text" id="reg-name" placeholder="Full Name">
+        <input type="date" id="reg-dob" placeholder="Date of Birth">
+        <!-- Using text input for URL for simplicity in this demo -->
+        <input type="text" id="reg-pic" placeholder="Profile Picture URL (https://...)">
+        <input type="email" id="reg-email" placeholder="Create Email ID">
+        <input type="password" id="reg-pass" placeholder="Create Password">
+        <button onclick="signup()">Sign Up</button>
+        <button class="switch-btn" onclick="toggleView()">Back to Login</button>
     </div>
 </div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 
 <script>
     const firebaseConfig = {
@@ -76,149 +92,66 @@
         appId: "1:514845910910:web:5a2402130a97b5d749b52f",
         measurementId: "G-CQ5KWGJSZB"
     };
+
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const emailParam = urlParams.get('email');
-    const typeParam = urlParams.get('type');
-    let targetEmail = "";
-
-    // Multi-login check
-    function checkSession() {
-        const sessions = JSON.parse(localStorage.getItem('x_sessions') || '[]');
-        const isAnotherLogin = typeParam === 'another-login';
-        
-        // If already logged in and not asking for another login
-        if (sessions.length > 0 && !isAnotherLogin) {
-            // Check if current device email logic applies (simplified)
-             const current = sessions[sessions.length -1]; // Last active
-             if(emailParam && current.email === emailParam){
-                 document.getElementById('error1').textContent = "Email Already Logged in This Device";
-                 document.getElementById('error1').style.display = 'block';
-                 return;
-             }
-             if(!emailParam) {
-                 window.location.href = 'https://abc.xyz';
-             }
-        }
-        
-        if (emailParam) {
-            document.getElementById('identifier').value = emailParam;
-            checkIdentifier();
-        }
+    function toggleView() {
+        document.getElementById('login-form').classList.toggle('hidden');
+        document.getElementById('signup-form').classList.toggle('hidden');
     }
 
-    checkSession();
+    function signup() {
+        const name = document.getElementById('reg-name').value;
+        const email = document.getElementById('reg-email').value.toLowerCase(); // Normalized email
+        const password = document.getElementById('reg-pass').value;
+        const dob = document.getElementById('reg-dob').value;
+        const pic = document.getElementById('reg-pic').value || "https://via.placeholder.com/50";
 
-    async function checkIdentifier() {
-        let input = document.getElementById('identifier').value.trim();
-        const errorDiv = document.getElementById('error1');
-        errorDiv.style.display = 'none';
+        if(!email || !password || !name) return alert("Please fill all fields");
 
-        if (!input) return;
+        // Create user in Firestore
+        db.collection("users").doc(email).set({
+            name: name,
+            dob: dob,
+            profilePic: pic,
+            password: password, // Note: In a real app, never store plain text passwords!
+            email: email
+        }).then(() => {
+            alert("Account created! Please login.");
+            toggleView();
+        }).catch((error) => {
+            console.error("Error:", error);
+            alert("Error creating account: " + error.message);
+        });
+    }
 
-        // Domain logic: default to pplx.com if username
-        if (!input.includes('@') && !/^\d+$/.test(input)) {
-            input = input + "@pplx.com";
-        } else if (!input.includes('@') && /^\d+$/.test(input)) {
-            // Is Mobile Number
-        } else if (input.includes('@') && !input.includes('.')) {
-             // Basic user input example@domain -> example@domain.com logic handled by user, 
-             // but prompt says "example@pplx.com" default. 
-        }
+    function login() {
+        const email = document.getElementById('login-email').value.toLowerCase();
+        const password = document.getElementById('login-pass').value;
 
-        let querySnapshot;
-        let isMobile = /^\d+$/.test(input);
-
-        try {
-            if (isMobile) {
-                querySnapshot = await db.collection('users').where('mobile', '==', input).get();
-            } else {
-                querySnapshot = await db.collection('users').where('email', '==', input).get();
-            }
-
-            if (querySnapshot.empty) {
-                errorDiv.textContent = "Sorry, we could not find your account.";
-                errorDiv.style.display = 'block';
-            } else {
-                const users = querySnapshot.docs.map(doc => doc.data());
-                
-                if (isMobile) {
-                    if (users.length === 1) {
-                        // Case 1: Mobile has 1 email
-                        targetEmail = users[0].email;
-                        showPasswordStep();
-                    } else {
-                        // Mobile has multiple emails (Case 1 subcase)
-                        // For simplicity in this demo, ask for email to clarify
-                        errorDiv.textContent = "Multiple accounts found. Please enter your email.";
-                        errorDiv.style.display = 'block';
-                        document.getElementById('identifier').value = "";
-                        document.getElementById('identifier').placeholder = "Enter Email Address";
-                        // Add forgot email logic link specifically here if needed
-                    }
+        db.collection("users").doc(email).get().then((doc) => {
+            if (doc.exists) {
+                const userData = doc.data();
+                if (userData.password === password) {
+                    // Save session
+                    localStorage.setItem("userEmail", email);
+                    localStorage.setItem("userName", userData.name);
+                    localStorage.setItem("userPic", userData.profilePic);
+                    
+                    // Redirect to home page with inbox view
+                    window.location.href = "1.html?v=inbox";
                 } else {
-                    targetEmail = input;
-                    showPasswordStep();
-                }
-            }
-        } catch (e) {
-            console.error(e);
-            errorDiv.textContent = "Network error.";
-            errorDiv.style.display = 'block';
-        }
-    }
-
-    function showPasswordStep() {
-        document.getElementById('step1').classList.add('hidden');
-        document.getElementById('step2').classList.remove('hidden');
-        document.getElementById('lockedEmail').value = targetEmail;
-        document.getElementById('forgotPassLink').href = `5.html?email=${targetEmail}`;
-        document.getElementById('pageTitle').innerText = "Enter your password";
-    }
-
-    async function login() {
-        const password = document.getElementById('password').value;
-        const errorDiv = document.getElementById('error2');
-        errorDiv.style.display = 'none';
-
-        try {
-            const querySnapshot = await db.collection('users')
-                .where('email', '==', targetEmail)
-                .where('password', '==', password)
-                .get();
-
-            if (!querySnapshot.empty) {
-                // Success
-                const user = querySnapshot.docs[0].data();
-                const sessions = JSON.parse(localStorage.getItem('x_sessions') || '[]');
-                
-                // Add new session
-                sessions.push({
-                    email: user.email,
-                    name: user.firstName + ' ' + user.lastName,
-                    handle: user.email.split('@')[0],
-                    uid: querySnapshot.docs[0].id
-                });
-                
-                localStorage.setItem('x_sessions', JSON.stringify(sessions));
-
-                if(typeParam === 'another-login') {
-                    // Just close or go to switcher if intended
-                     window.location.href = 'https://abc.xyz'; // Or back to switcher
-                } else {
-                    window.location.href = 'https://abc.xyz';
+                    alert("Wrong Password");
                 }
             } else {
-                errorDiv.textContent = "Wrong password!";
-                errorDiv.style.display = 'block';
+                alert("User not found");
             }
-        } catch(e) {
-            errorDiv.textContent = "Login failed.";
-            errorDiv.style.display = 'block';
-        }
+        }).catch((error) => {
+            alert("Login Error: " + error.message);
+        });
     }
 </script>
+
 </body>
 </html>

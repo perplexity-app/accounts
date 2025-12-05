@@ -3,88 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Email App - Login</title>
+    <title>Inbox</title>
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
+        body { font-family: 'Arial', sans-serif; margin: 0; background-color: #f6f8fc; height: 100vh; overflow: hidden; }
+        
+        /* Header */
+        header {
+            background-color: white; padding: 10px 20px; display: flex; align-items: center; 
+            justify-content: space-between; border-bottom: 1px solid #e0e0e0; height: 50px;
         }
-        .container {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
+        .logo { font-size: 20px; color: #444; font-weight: bold; display: flex; align-items: center; gap: 10px; }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .user-profile img { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+        .logout { color: #d93025; cursor: pointer; font-weight: bold; font-size: 0.9em; }
+
+        /* Layout */
+        .main-container { display: flex; height: calc(100vh - 71px); }
+        
+        /* Sidebar */
+        .sidebar { width: 250px; background: white; padding-top: 20px; display: flex; flex-direction: column; }
+        .compose-btn-container { padding: 0 20px 20px 20px; }
+        .compose-btn {
+            background: white; border: 1px solid #dadce0; box-shadow: 0 1px 2px 0 rgba(60,64,67,0.3);
+            border-radius: 24px; padding: 10px 20px; display: flex; align-items: center; gap: 10px;
+            cursor: pointer; transition: box-shadow .2s; font-size: 14px; font-weight: 500; color: #3c4043;
         }
-        h2 { color: #1a73e8; margin-bottom: 20px; }
-        input {
-            width: 100%;
-            padding: 12px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            box-sizing: border-box;
+        .compose-btn:hover { box-shadow: 0 1px 3px 1px rgba(60,64,67,0.15); background: #f8f9fa; }
+        
+        /* Content Area */
+        .content { flex: 1; overflow-y: auto; padding: 20px; position: relative; }
+
+        /* Inbox List */
+        .email-item {
+            background: white; border-bottom: 1px solid #f1f3f4; padding: 10px 15px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center; transition: 0.1s;
         }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
-            margin-top: 10px;
+        .email-item:hover { box-shadow: inset 1px 0 0 #dadce0, inset -1px 0 0 #dadce0, 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); z-index: 1; }
+        .email-sender { font-weight: bold; width: 20%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .email-subject { color: #5f6368; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 10px;}
+        .email-date { font-size: 12px; color: #5f6368; width: 80px; text-align: right;}
+        .starred { color: #f4b400 !important; }
+
+        /* Compose View */
+        .compose-box { background: white; max-width: 600px; margin: 0 auto; padding: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.1); border-radius: 8px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #666; font-size: 0.9em; }
+        .form-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        textarea.form-input { height: 200px; resize: none; font-family: sans-serif; }
+        .send-btn { background: #1a73e8; color: white; border: none; padding: 10px 25px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+
+        /* Read View */
+        .read-view { background: white; padding: 30px; border-radius: 8px; max-width: 800px; margin: 0 auto; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .read-header { border-bottom: 1px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .read-subject { font-size: 22px; margin: 0 0 10px 0; }
+        .read-meta { color: #666; font-size: 0.9em; display: flex; justify-content: space-between; }
+        .read-body { white-space: pre-wrap; line-height: 1.6; }
+        .back-btn { margin-bottom: 20px; cursor: pointer; color: #5f6368; display: flex; align-items: center; gap: 5px; background: none; border: none; font-size: 14px;}
+
+        /* Context Menu (Long Press) */
+        #context-menu {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000;
         }
-        button:hover { background-color: #1557b0; }
-        .toggle-link {
-            margin-top: 15px;
-            display: block;
-            color: #1a73e8;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        .hidden { display: none; }
-        #pfp-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; display: none; margin-left: auto; margin-right: auto;}
+        .context-box { background: white; width: 300px; border-radius: 8px; overflow: hidden; }
+        .context-option { padding: 15px 20px; border-bottom: 1px solid #eee; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+        .context-option:hover { background: #f5f5f5; }
+        .context-option:last-child { border: none; }
+        .context-option.delete { color: #d93025; }
+
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="login-form">
-        <h2>Sign In</h2>
-        <input type="email" id="login-email" placeholder="Email ID">
-        <input type="password" id="login-pass" placeholder="Password">
-        <button onclick="login()">Login</button>
-        <span class="toggle-link" onclick="toggleView()">Create an account</span>
+<header>
+    <div class="logo">
+        <span class="material-icons" style="color:#4285f4">mail</span> MyMail
+    </div>
+    <div class="user-profile">
+        <span id="display-name">User</span>
+        <img id="display-pic" src="" alt="Profile">
+        <span class="logout" onclick="logout()">Logout</span>
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="sidebar">
+        <div class="compose-btn-container">
+            <div class="compose-btn" onclick="navigateTo('compose')">
+                <span class="material-icons" style="color:#d93025; font-size: 24px;">add</span> Compose
+            </div>
+        </div>
+        <!-- Simple Nav -->
+        <div class="context-option" onclick="navigateTo('inbox')">
+            <span class="material-icons">inbox</span> Inbox
+        </div>
     </div>
 
-    <div id="signup-form" class="hidden">
-        <h2>Sign Up</h2>
-        <img id="pfp-preview" src="" alt="Profile">
-        <input type="file" id="signup-pfp" accept="image/*" onchange="previewImage()">
-        <input type="text" id="signup-name" placeholder="Full Name">
-        <input type="date" id="signup-dob" placeholder="Date of Birth">
-        <input type="email" id="signup-email" placeholder="Create Email ID">
-        <input type="password" id="signup-pass" placeholder="Create Password">
-        <button onclick="signup()">Sign Up</button>
-        <span class="toggle-link" onclick="toggleView()">Back to Login</span>
+    <div class="content" id="main-content">
+        <!-- Dynamic Content loads here -->
     </div>
 </div>
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<!-- Custom Context Menu for Long Press -->
+<div id="context-menu" onclick="closeContextMenu(event)">
+    <div class="context-box" onclick="event.stopPropagation()"> <!-- Stop click through -->
+        <div class="context-option" onclick="actionStar()">
+            <span class="material-icons">star_border</span> Star / Unstar
+        </div>
+        <div class="context-option" onclick="actionLabel()">
+            <span class="material-icons">label</span> Create New Label
+        </div>
+        <div class="context-option delete" onclick="actionDelete()">
+            <span class="material-icons">delete</span> Delete
+        </div>
+    </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 
 <script>
+    // --- Config ---
     const firebaseConfig = {
         apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
         authDomain: "xperts-metadata.firebaseapp.com",
@@ -96,76 +139,254 @@
     };
 
     firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Check if already logged in
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            window.location.href = "1.html?v=inbox";
-        }
-    });
-
-    let pfpBase64 = "";
-
-    function toggleView() {
-        document.getElementById('login-form').classList.toggle('hidden');
-        document.getElementById('signup-form').classList.toggle('hidden');
+    // --- Auth Check ---
+    const userEmail = localStorage.getItem("userEmail");
+    if (!userEmail) {
+        window.location.href = "login.html";
     }
 
-    function previewImage() {
-        const file = document.getElementById('signup-pfp').files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('pfp-preview').src = e.target.result;
-                document.getElementById('pfp-preview').style.display = 'block';
-                pfpBase64 = e.target.result;
-            };
-            reader.readAsDataURL(file);
+    // Load User UI
+    document.getElementById('display-name').textContent = localStorage.getItem("userName");
+    document.getElementById('display-pic').src = localStorage.getItem("userPic") || "https://via.placeholder.com/35";
+
+    // --- Routing Logic ---
+    function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    function navigateTo(view, extra = "") {
+        let newUrl = `1.html?v=${view}`;
+        if(extra) newUrl += `&${extra}`;
+        history.pushState({}, "", newUrl);
+        renderPage();
+    }
+
+    window.onpopstate = renderPage; // Handle browser back button
+
+    function renderPage() {
+        const view = getUrlParameter('v') || 'inbox'; // default to inbox
+        const contentDiv = document.getElementById('main-content');
+        contentDiv.innerHTML = ""; // Clear content
+
+        if (view === 'inbox') {
+            loadInbox(contentDiv);
+        } else if (view === 'compose') {
+            loadCompose(contentDiv);
+        } else if (view === 'read') {
+            const id = getUrlParameter('id');
+            loadEmail(contentDiv, id);
         }
     }
 
-    function signup() {
-        const email = document.getElementById('signup-email').value;
-        const pass = document.getElementById('signup-pass').value;
-        const name = document.getElementById('signup-name').value;
-        const dob = document.getElementById('signup-dob').value;
+    // --- Views ---
 
-        if(!email || !pass || !name) return alert("Please fill all fields");
+    function loadInbox(container) {
+        const list = document.createElement('div');
+        container.appendChild(list);
 
-        auth.createUserWithEmailAndPassword(email, pass)
-            .then((cred) => {
-                // Save user details to Firestore
-                return db.collection('users').doc(cred.user.email).set({
-                    name: name,
-                    dob: dob,
-                    email: email,
-                    pfp: pfpBase64 || "https://via.placeholder.com/150",
-                    uid: cred.user.uid
+        // Real-time listener
+        db.collection('emails')
+            .where('to', '==', userEmail)
+            .orderBy('timestamp', 'desc')
+            .onSnapshot((snapshot) => {
+                list.innerHTML = ""; // Refresh list
+                if(snapshot.empty) {
+                    list.innerHTML = "<p style='text-align:center; color:#888; margin-top:50px;'>Inbox is empty</p>";
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const item = document.createElement('div');
+                    item.className = 'email-item';
+                    
+                    // Star Icon
+                    const starColor = data.isStarred ? '#f4b400' : '#dadce0';
+                    const starIcon = data.isStarred ? 'star' : 'star_border';
+
+                    item.innerHTML = `
+                        <span class="material-icons" style="color:${starColor}; margin-right:10px;">${starIcon}</span>
+                        <div class="email-sender">${data.from}</div>
+                        <div class="email-subject">
+                            ${data.labels && data.labels.length > 0 ? `<span style="background:#ddd; font-size:10px; padding:2px 4px; border-radius:3px;">${data.labels[0]}</span>` : ''} 
+                            ${data.subject} - <span style="color:#999">${data.body.substring(0, 30)}...</span>
+                        </div>
+                        <div class="email-date">${new Date(data.timestamp.toDate()).toLocaleDateString()}</div>
+                    `;
+
+                    // Click to Read
+                    item.onclick = (e) => {
+                        // prevent navigation if just cleared long press or clicked star (could add specific logic)
+                        navigateTo('read', `id=${doc.id}`);
+                    };
+
+                    // Long Press Logic
+                    addLongPressEvent(item, doc.id);
+
+                    list.appendChild(item);
                 });
-            })
-            .then(() => {
-                alert("Account Created!");
-                window.location.href = "1.html?v=inbox";
-            })
-            .catch((error) => {
-                alert(error.message);
             });
     }
 
-    function login() {
-        const email = document.getElementById('login-email').value;
-        const pass = document.getElementById('login-pass').value;
-
-        auth.signInWithEmailAndPassword(email, pass)
-            .then(() => {
-                window.location.href = "1.html?v=inbox";
-            })
-            .catch((error) => {
-                alert(error.message);
-            });
+    function loadCompose(container) {
+        container.innerHTML = `
+            <div class="compose-box">
+                <h3 style="margin-top:0">New Message</h3>
+                <div class="form-group">
+                    <label>From</label>
+                    <input type="text" class="form-input" value="${userEmail}" disabled>
+                </div>
+                <div class="form-group">
+                    <label>To</label>
+                    <input type="email" id="to-email" class="form-input" placeholder="Receiver Email">
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" id="subject" class="form-input" placeholder="Subject">
+                </div>
+                <div class="form-group">
+                    <textarea id="body" class="form-input" placeholder="Type your message here..."></textarea>
+                </div>
+                <button class="send-btn" onclick="sendEmail()">Send</button>
+            </div>
+        `;
     }
+
+    function loadEmail(container, docId) {
+        db.collection('emails').doc(docId).get().then((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                container.innerHTML = `
+                    <div class="read-view">
+                        <button class="back-btn" onclick="window.history.back()">
+                            <span class="material-icons">arrow_back</span> Back
+                        </button>
+                        <div class="read-header">
+                            <h1 class="read-subject">${data.subject}</h1>
+                            <div class="read-meta">
+                                <span><strong>From:</strong> ${data.from}</span>
+                                <span>${new Date(data.timestamp.toDate()).toLocaleString()}</span>
+                            </div>
+                            <div class="read-meta" style="margin-top:5px">
+                                <span><strong>To:</strong> Me</span>
+                            </div>
+                        </div>
+                        <div class="read-body">${data.body}</div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = "<p>Email not found.</p>";
+            }
+        });
+    }
+
+    // --- Actions ---
+
+    function sendEmail() {
+        const to = document.getElementById('to-email').value.toLowerCase();
+        const subject = document.getElementById('subject').value;
+        const body = document.getElementById('body').value;
+
+        if(!to || !subject || !body) return alert("Please fill all fields");
+
+        db.collection("emails").add({
+            from: userEmail,
+            to: to,
+            subject: subject,
+            body: body,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            isStarred: false,
+            labels: [],
+            isDeleted: false
+        }).then(() => {
+            alert("Email Sent!");
+            navigateTo('inbox');
+        }).catch((error) => {
+            console.error("Error sending email: ", error);
+            alert("Error sending email.");
+        });
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = "login.html";
+    }
+
+    // --- Long Press Logic ---
+    let pressTimer;
+    let selectedEmailId = null;
+
+    function addLongPressEvent(element, id) {
+        // Touch devices
+        element.addEventListener('touchstart', (e) => {
+            pressTimer = setTimeout(() => openContextMenu(id), 800); // 800ms long press
+        });
+        element.addEventListener('touchend', () => clearTimeout(pressTimer));
+        element.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+        // Mouse (Desktop)
+        element.addEventListener('mousedown', (e) => {
+            // Only trigger if left click
+            if(e.button === 0) {
+                pressTimer = setTimeout(() => openContextMenu(id), 800);
+            }
+        });
+        element.addEventListener('mouseup', () => clearTimeout(pressTimer));
+        element.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+    }
+
+    function openContextMenu(id) {
+        selectedEmailId = id;
+        document.getElementById('context-menu').style.display = 'flex';
+        // Vibrate on mobile for feedback
+        if (navigator.vibrate) navigator.vibrate(50);
+    }
+
+    function closeContextMenu(e) {
+        if(e) e.preventDefault();
+        document.getElementById('context-menu').style.display = 'none';
+        selectedEmailId = null;
+    }
+
+    // Context Menu Actions
+    function actionDelete() {
+        if(!selectedEmailId) return;
+        if(confirm("Delete this email?")) {
+            db.collection("emails").doc(selectedEmailId).delete().then(() => {
+                closeContextMenu();
+            });
+        }
+    }
+
+    function actionStar() {
+        if(!selectedEmailId) return;
+        // Check current status then toggle
+        db.collection("emails").doc(selectedEmailId).get().then(doc => {
+            const current = doc.data().isStarred;
+            db.collection("emails").doc(selectedEmailId).update({
+                isStarred: !current
+            }).then(closeContextMenu);
+        });
+    }
+
+    function actionLabel() {
+        if(!selectedEmailId) return;
+        const label = prompt("Enter Label Name:");
+        if(label) {
+            db.collection("emails").doc(selectedEmailId).update({
+                labels: firebase.firestore.FieldValue.arrayUnion(label)
+            }).then(closeContextMenu);
+        }
+    }
+
+    // Initial Load
+    renderPage();
+
 </script>
 
 </body>
