@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email App - Access</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --bg: #f0f2f5;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+        }
+        h2 { color: #202124; margin-bottom: 20px; }
+        input {
+            width: 100%;
+            padding: 12px 10px;
+            margin: 8px 0;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        input:focus { border-color: var(--primary); border-width: 2px; margin: 7px 0; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+        button:hover { background-color: #1557b0; }
+        .toggle-link {
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--primary);
+            cursor: pointer;
+            display: inline-block;
+        }
+        .hidden { display: none; }
+        .error { color: red; font-size: 12px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="login-form">
+        <h2>Sign In</h2>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <div class="error" id="login-error"></div>
+        <span class="toggle-link" onclick="toggleView()">Create an account</span>
+    </div>
+
+    <div id="signup-form" class="hidden">
+        <h2>Create Account</h2>
+        <input type="text" id="fname" placeholder="First Name">
+        <input type="text" id="lname" placeholder="Last Name">
+        <input type="text" id="dob" placeholder="Date of Birth (DD/MM/YYYY)">
+        <input type="text" id="pic-url" placeholder="Profile Picture URL">
+        <input type="email" id="signup-email" placeholder="Email">
+        <input type="password" id="signup-password" placeholder="Password">
+        <button onclick="signup()">Sign Up</button>
+        <div class="error" id="signup-error"></div>
+        <span class="toggle-link" onclick="toggleView()">Already have an account?</span>
+    </div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Check if already logged in
+    auth.onAuthStateChanged(user => {
+        if (user) window.location.href = "2.html";
+    });
+
+    function toggleView() {
+        document.getElementById('login-form').classList.toggle('hidden');
+        document.getElementById('signup-form').classList.toggle('hidden');
+        document.getElementById('login-error').innerText = "";
+        document.getElementById('signup-error').innerText = "";
+    }
+
+    function signup() {
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+        const fname = document.getElementById('fname').value;
+        const lname = document.getElementById('lname').value;
+        const dob = document.getElementById('dob').value;
+        const pic = document.getElementById('pic-url').value || "https://ui-avatars.com/api/?name=" + fname + "+" + lname;
+
+        if(!email || !password || !fname || !lname) {
+            document.getElementById('signup-error').innerText = "Please fill in all required fields";
+            return;
+        }
+
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                // Store user data in Firestore for internal lookup
+                return db.collection("users").doc(userCredential.user.uid).set({
+                    firstName: fname,
+                    lastName: lname,
+                    dob: dob,
+                    photoURL: pic,
+                    email: email, // Critical for lookup
+                    uid: userCredential.user.uid
+                });
+            })
+            .then(() => {
+                window.location.href = "2.html";
+            })
+            .catch((error) => {
+                document.getElementById('signup-error').innerText = error.message;
+            });
+    }
+
+    function login() {
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                window.location.href = "2.html";
+            })
+            .catch((error) => {
+                document.getElementById('login-error').innerText = error.message;
+            });
+    }
+</script>
+</body>
+</html>
