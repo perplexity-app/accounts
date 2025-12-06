@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inbox</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; background: #f6f8fc; display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: white; padding: 20px; border-right: 1px solid #ddd; }
+        .main { flex: 1; padding: 20px; overflow-y: auto; }
+        .btn-compose { display: block; width: 100%; padding: 15px; background: white; border-radius: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); cursor: pointer; text-align: center; margin-bottom: 20px; font-weight: bold; color: #555; }
+        .nav-item { padding: 10px; cursor: pointer; border-radius: 0 20px 20px 0; margin-bottom: 5px; display: flex; align-items: center; }
+        .nav-item.active { background: #e8f0fe; color: #1967d2; }
+        .nav-item .material-icons { margin-right: 10px; }
+        .email-row { background: white; padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; cursor: pointer; }
+        .email-row:hover { box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div class="btn-compose" onclick="window.location.href='3.html'">+ Compose</div>
+    <div class="nav-item active" id="btn-inbox" onclick="loadEmails('inbox')"><span class="material-icons">inbox</span> Inbox</div>
+    <div class="nav-item" id="btn-sent" onclick="loadEmails('sent')"><span class="material-icons">send</span> Sent</div>
+    <div style="margin-top: 50px; cursor: pointer; color: red;" onclick="firebase.auth().signOut()">Logout</div>
+</div>
+
+<div class="main">
+    <h2 id="page-title">Inbox</h2>
+    <div id="email-list">Loading...</div>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyDL7sPp-FkG59L-mRQ7BrCGgeKMhQC80iw",
+        authDomain: "xperts-metadata.firebaseapp.com",
+        projectId: "xperts-metadata",
+        storageBucket: "xperts-metadata.firebasestorage.app",
+        messagingSenderId: "514845910910",
+        appId: "1:514845910910:web:5a2402130a97b5d749b52f",
+        measurementId: "G-CQ5KWGJSZB"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    let myEmail = "";
+
+    auth.onAuthStateChanged(user => {
+        if (!user) window.location.href = "1.html";
+        else {
+            // Force lowercase to ensure matching works
+            myEmail = user.email.toLowerCase();
+            loadEmails('inbox');
+        }
+    });
+
+    let unsubscribe;
+
+    function loadEmails(type) {
+        document.getElementById('page-title').innerText = type === 'inbox' ? "Inbox" : "Sent Items";
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('btn-' + type).classList.add('active');
+        
+        const list = document.getElementById('email-list');
+        list.innerHTML = "Loading...";
+
+        if (unsubscribe) unsubscribe();
+
+        let query;
+        if (type === 'inbox') {
+            // Find emails sent TO me
+            query = db.collection('emails').where('to', '==', myEmail).orderBy('timestamp', 'desc');
+        } else {
+            // Find emails sent BY me
+            query = db.collection('emails').where('from', '==', myEmail).orderBy('timestamp', 'desc');
+        }
+
+        unsubscribe = query.onSnapshot(snapshot => {
+            list.innerHTML = "";
+            if (snapshot.empty) {
+                list.innerHTML = "<p>No emails found.</p>";
+                return;
+            }
+
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const person = type === 'inbox' ? data.from : "To: " + data.to;
+                const date = data.timestamp ? new Date(data.timestamp.seconds * 1000).toLocaleDateString() : "";
+                
+                list.innerHTML += `
+                    <div class="email-row">
+                        <div style="font-weight:bold; width: 200px;">${person}</div>
+                        <div style="flex:1;">
+                            <span style="font-weight:500">${data.subject}</span> - 
+                            <span style="color:#666">${data.message}</span>
+                        </div>
+                        <div style="font-size:12px; color:#888;">${date}</div>
+                    </div>
+                `;
+            });
+        }, error => {
+            console.log("Error:", error);
+            list.innerHTML = "Error loading emails. Check Console.";
+        });
+    }
+</script>
+</body>
+</html>
